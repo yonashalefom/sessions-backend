@@ -32,7 +32,9 @@
                 "revert",
                 "style",
                 "test",
-                "chore"
+                "chore",
+                "perf",
+                "build"
             ]
         ]
     }

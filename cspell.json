@@ -1,0 +1,34 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "nestjs"
+  ],
+  "dictionaries": ["custom-dictionary"],
+  "dictionaryDefinitions": [
+    {
+      "name": "custom-dictionary",
+      "path": "./.cspell/custom-dictionary.txt",
+      "addWords": true
+    }
+  ],
+  "ignoreWords": [
+
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    "endpoints/**",
+    "*coverage/**",
+    ".cspell/**",
+    ".husky/**",
+    ".github/**",
+    "dist/**",
+    "logs/**",
+    "src/database/json/**",
+    "**/**/*.json",
+    "tsconfig.build.tsbuildinfo"
+  ],
+  "flagWords": [
+    "logs/**"
+  ]
+}
