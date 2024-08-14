@@ -1,0 +1,26 @@
+{
+  "name": "Sessions",
+  "version": "0.1.0",
+  "description": "A web portal where you can book one-on-one video calls with a variety of experts in different fields.",
+  "main": "index.js",
+  "repository": "https://github.com/Yon12853/sessions-backend",
+  "author": "Yonas Halefom <yonet1553@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "commit": "npx cz",
+    "prepare": "husky"
+  },
+  "private": true,
+  "devDependencies": {
+    "@commitlint/cli": "^19.4.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.1.4"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}
