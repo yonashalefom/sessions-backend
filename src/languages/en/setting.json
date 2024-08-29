@@ -1,0 +1,10 @@
+{
+    "list": "List of settings retrieved successfully.",
+    "get": "Setting details fetched successfully.",
+    "update": "Setting updated successfully.",
+    "core": "Core setting updated successfully.",
+    "error": {
+        "valueNotAllowed": "The provided value is not allowed for this setting.",
+        "notFound": "The requested setting was not found."
+    }
+}
