@@ -1,16 +1,11 @@
 {
-  "arrowParens": "avoid",
-  "bracketSpacing": true,
-  "insertPragma": false,
-  "bracketSameLine": false,
-  "printWidth": 120,
-  "proseWrap": "preserve",
-  "quoteProps": "as-needed",
-  "requirePragma": false,
   "semi": true,
-  "singleQuote": true,
-  "tabWidth": 4,
   "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 80,
+  "tabWidth": 4,
   "useTabs": false,
-  "endOfLine": "lf"
+  "endOfLine": "lf",
+  "bracketSpacing": true,
+  "arrowParens": "avoid"
 }

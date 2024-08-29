@@ -1,0 +1,6 @@
+{
+    "updateAvailabilitySuccess": "Availability times updated successfully",
+    "error": {
+        "inactive": "Expert is inactive."
+    }
+}
