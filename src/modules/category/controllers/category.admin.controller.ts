@@ -139,6 +139,7 @@ export class CategoryAdminController {
         @PaginationQueryFilterInBoolean('isActive', CATEGORY_DEFAULT_IS_ACTIVE)
         isActive: Record<string, any>
     ): Promise<IResponsePaging<CategoryListResponseDto>> {
+        console.log(JSON.stringify(isActive, null, 2));
         const find: Record<string, any> = {
             ..._search,
             ...isActive,

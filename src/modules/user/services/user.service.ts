@@ -16,6 +16,7 @@ import { plainToInstance } from 'class-transformer';
 import { Document } from 'mongoose';
 import { DatabaseQueryContain } from 'src/common/database/decorators/database.decorator';
 import { ExpertUpdateAvailabilityRequestDto } from 'src/modules/user/dtos/request/user.update-availability.dto';
+import { UpdateExpertiseRequestDto } from 'src/modules/user/dtos/request/user.update-expertise.dto';
 import { IUserService } from 'src/modules/user/interfaces/user.service.interface';
 import { UserAvailabilityEntity } from 'src/modules/user/repository/entities/embedded/user.availability';
 import { UserRepository } from 'src/modules/user/repository/repositories/user.repository';
@@ -469,6 +470,16 @@ export class UserService implements IUserService {
         options?: IDatabaseSaveOptions
     ): Promise<UserDoc> {
         repository.availability = availability as UserAvailabilityEntity;
+
+        return this.userRepository.save(repository, options);
+    }
+
+    async updateExpertise(
+        repository: UserDoc,
+        { expertise }: UpdateExpertiseRequestDto,
+        options?: IDatabaseSaveOptions
+    ): Promise<UserDoc> {
+        repository.expertise = expertise;
 
         return this.userRepository.save(repository, options);
     }
