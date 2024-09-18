@@ -46,6 +46,7 @@ import { ClientSession, Connection } from 'mongoose';
 import { DatabaseConnection } from 'src/common/database/decorators/database.decorator';
 import { ENUM_COUNTRY_STATUS_CODE_ERROR } from 'src/modules/country/enums/country.status-code.enum';
 import { CountryService } from 'src/modules/country/services/country.service';
+import { CreateUserValidation } from 'src/modules/user/decorators/user.common.decorator';
 import {
     UserAdminActiveDoc,
     UserAdminBlockedDoc,
@@ -153,6 +154,7 @@ export class UserAdminController {
             data: mapped,
         };
     }
+
     // endregion
 
     // region Get User
@@ -175,11 +177,13 @@ export class UserAdminController {
 
         return { data: mapped };
     }
+
     // endregion
 
     // region Register User
     @UserAdminCreateDoc()
     @Response('user.create')
+    @CreateUserValidation()
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.USER,
         action: [ENUM_POLICY_ACTION.READ, ENUM_POLICY_ACTION.CREATE],
@@ -270,6 +274,7 @@ export class UserAdminController {
             });
         }
     }
+
     // endregion
 
     // region Update User
@@ -313,6 +318,7 @@ export class UserAdminController {
 
         await this.userService.update(user, { name, country, role });
     }
+
     // endregion
 
     // region Inactivate User
@@ -358,6 +364,7 @@ export class UserAdminController {
             });
         }
     }
+
     // endregion
 
     // region Activate User
@@ -403,6 +410,7 @@ export class UserAdminController {
             });
         }
     }
+
     // endregion
 
     // region Block User
@@ -451,5 +459,6 @@ export class UserAdminController {
             });
         }
     }
+
     // endregion
 }

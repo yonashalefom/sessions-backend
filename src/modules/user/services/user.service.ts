@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+    IDatabaseAggregateOptions,
     IDatabaseCreateOptions,
     IDatabaseDeleteManyOptions,
     IDatabaseExistOptions,
@@ -13,9 +14,11 @@ import { HelperDateService } from 'src/common/helper/services/helper.date.servic
 import { ConfigService } from '@nestjs/config';
 import { IAuthPassword } from 'src/modules/auth/interfaces/auth.interface';
 import { plainToInstance } from 'class-transformer';
-import { Document } from 'mongoose';
+import { Document, PipelineStage } from 'mongoose';
 import { DatabaseQueryContain } from 'src/common/database/decorators/database.decorator';
 import { ExpertUpdateAvailabilityRequestDto } from 'src/modules/user/dtos/request/user.update-availability.dto';
+import { UpdateExpertiseRequestDto } from 'src/modules/user/dtos/request/user.update-expertise.dto';
+import { ExpertsListByCategoryResponseDto } from 'src/modules/user/dtos/response/experts.list.by.category.response.dto';
 import { IUserService } from 'src/modules/user/interfaces/user.service.interface';
 import { UserAvailabilityEntity } from 'src/modules/user/repository/entities/embedded/user.availability';
 import { UserRepository } from 'src/modules/user/repository/repositories/user.repository';
@@ -24,6 +27,7 @@ import {
     UserEntity,
 } from 'src/modules/user/repository/entities/user.entity';
 import {
+    IExpertsByCategoryDoc,
     IUserDoc,
     IUserEntity,
 } from 'src/modules/user/interfaces/user.interface';
@@ -81,6 +85,13 @@ export class UserService implements IUserService {
         return this.userRepository.getTotal(find, options);
     }
 
+    async getTotalAggregate(
+        pipelines: PipelineStage[],
+        options?: IDatabaseAggregateOptions
+    ): Promise<number> {
+        return this.userRepository.getTotalAggregate(pipelines, options);
+    }
+
     async findOneById(
         _id: string,
         options?: IDatabaseOptions
@@ -117,6 +128,12 @@ export class UserService implements IUserService {
             ...options,
             join: true,
         });
+    }
+
+    async groupByExpertise(
+        pipeline: PipelineStage[]
+    ): Promise<IExpertsByCategoryDoc[]> {
+        return this.userRepository.aggregate(pipeline);
     }
 
     async findOneWithRoleAndCountry(
@@ -473,6 +490,16 @@ export class UserService implements IUserService {
         return this.userRepository.save(repository, options);
     }
 
+    async updateExpertise(
+        repository: UserDoc,
+        { expertise }: UpdateExpertiseRequestDto,
+        options?: IDatabaseSaveOptions
+    ): Promise<UserDoc> {
+        repository.expertise = expertise;
+
+        return this.userRepository.save(repository, options);
+    }
+
     async join(repository: UserDoc): Promise<IUserDoc> {
         return this.userRepository.join(repository, this.userRepository._join);
     }
@@ -511,6 +538,17 @@ export class UserService implements IUserService {
             UserListResponseDto,
             users.map((u: IUserDoc | IUserEntity) =>
                 u instanceof Document ? u.toObject() : u
+            )
+        );
+    }
+
+    async mapExpertsByCategoryList(
+        expertsByCategory: IExpertsByCategoryDoc[]
+    ): Promise<ExpertsListByCategoryResponseDto[]> {
+        return plainToInstance(
+            ExpertsListByCategoryResponseDto,
+            expertsByCategory.map((category: IExpertsByCategoryDoc) =>
+                category instanceof Document ? category.toObject() : category
             )
         );
     }

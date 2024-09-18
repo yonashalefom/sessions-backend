@@ -1,7 +1,8 @@
 import Joi from 'joi';
 import { ENUM_USER_AVAILABILITY_TIMESLOTS } from 'src/modules/user/enums/user.enum';
 
-export const expertAvailabilityCreateValidationSchema = Joi.object({
+// region Expert Availability Update Validation Schema
+export const expertAvailabilityUpdateValidationSchema = Joi.object({
     availability: Joi.object({
         availabilityTimeslots: Joi.array()
             .items(
@@ -79,3 +80,28 @@ export const expertAvailabilityCreateValidationSchema = Joi.object({
             'any.required': 'availability is required.',
         }),
 });
+// endregion
+
+// region Expert Expertise Update Validation Schema
+export const expertExpertiseUpdateValidationSchema = Joi.object({
+    expertise: Joi.array()
+        .items(Joi.string().uuid().required())
+        .unique()
+        .max(15)
+        .required()
+        .messages({
+            'array.base': 'expertise must be an array.',
+            'array.includesRequiredUnknowns':
+                'At least one valid expertise is required.',
+        }),
+});
+// endregion
+
+// region Create User Schema (For Admin)
+export const createUserValidationSchema = Joi.object({
+    email: Joi.string().email().required().max(100),
+    role: Joi.string().uuid().required(),
+    name: Joi.string().required().min(1).max(100),
+    country: Joi.string().uuid().required(),
+});
+// endregion

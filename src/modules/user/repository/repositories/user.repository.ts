@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Model, PopulateOptions } from 'mongoose';
 import { DatabaseRepositoryAbstract } from 'src/common/database/abstracts/database.repository.abstract';
 import { DatabaseModel } from 'src/common/database/decorators/database.decorator';
+import { CategoryEntity } from 'src/modules/category/repository/entities/category.entity';
 import { CountryEntity } from 'src/modules/country/repository/entities/country.entity';
 import { RoleEntity } from 'src/modules/role/repository/entities/role.entity';
 import {
@@ -33,6 +34,13 @@ export class UserRepository extends DatabaseRepositoryAbstract<
             justOne: true,
         },
         {
+            path: 'expertise',
+            localField: 'expertise',
+            foreignField: '_id',
+            model: CategoryEntity.name,
+            justOne: false,
+        },
+        {
             path: 'mobileNumber.country',
             localField: 'mobileNumber.country',
             foreignField: '_id',
@@ -59,6 +67,13 @@ export class UserRepository extends DatabaseRepositoryAbstract<
                 foreignField: '_id',
                 model: CountryEntity.name,
                 justOne: true,
+            },
+            {
+                path: 'expertise',
+                localField: 'expertise',
+                foreignField: '_id',
+                model: CategoryEntity.name,
+                justOne: false,
             },
             {
                 path: 'mobileNumber.country',

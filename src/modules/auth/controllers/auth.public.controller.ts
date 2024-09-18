@@ -71,6 +71,7 @@ export class AuthPublicController {
     async loginWithCredential(
         @Body() { email, password }: AuthLoginRequestDto
     ): Promise<IResponse<AuthLoginResponseDto>> {
+        console.log(email);
         let user: UserDoc = await this.userService.findOneByEmail(email);
         if (!user) {
             throw new NotFoundException({

@@ -9,6 +9,7 @@ import {
     AwsS3Entity,
     AwsS3Schema,
 } from 'src/modules/aws/repository/entities/aws.s3.entity';
+import { CategoryEntity } from 'src/modules/category/repository/entities/category.entity';
 import { CountryEntity } from 'src/modules/country/repository/entities/country.entity';
 import { RoleEntity } from 'src/modules/role/repository/entities/role.entity';
 import {
@@ -159,6 +160,12 @@ export class UserEntity extends DatabaseEntityAbstract {
         schema: UserAvailabilitySchema,
     })
     availability?: UserAvailabilityEntity;
+
+    @DatabaseProp({
+        required: false,
+        type: [{ type: String, ref: CategoryEntity.name }],
+    })
+    expertise: string[];
 }
 
 export const UserSchema = DatabaseSchema(UserEntity);

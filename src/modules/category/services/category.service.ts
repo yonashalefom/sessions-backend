@@ -151,4 +151,17 @@ export class CategoryService implements ICategoryService {
             )
         );
     }
+
+    async filterValidExpertise(ids: string[]): Promise<string[]> {
+        // Fetch only the IDs that exist in the database
+        const existingExpertise = await this.findAll({ _id: { $in: ids } });
+
+        // Extract the valid IDs
+        const existingIds = existingExpertise.map(expertise =>
+            expertise._id.toString()
+        );
+
+        // Return only the IDs that exist
+        return ids.filter(id => existingIds.includes(id));
+    }
 }

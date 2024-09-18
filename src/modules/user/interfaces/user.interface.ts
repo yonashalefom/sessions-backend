@@ -38,3 +38,10 @@ export interface IUserDoc
     country: CountryDoc;
     mobileNumber?: IUserMobileNumberDoc;
 }
+
+export interface IExpertsByCategoryDoc {
+    expertiseCategoryId: string;
+    expertiseCategory: string;
+    expertiseDescription: string;
+    users: [IUserDoc];
+}

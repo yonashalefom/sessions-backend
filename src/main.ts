@@ -40,7 +40,7 @@ async function bootstrap() {
     );
     const jobEnable: boolean = configService.get<boolean>('app.jobEnable');
 
-    const logger = new Logger('Sesssions-Main');
+    const logger = new Logger('Sessions-Main');
     process.env.NODE_ENV = env;
     process.env.TZ = timezone;
 
