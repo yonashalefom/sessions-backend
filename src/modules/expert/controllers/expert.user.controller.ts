@@ -25,10 +25,7 @@ import { USER_DEFAULT_STATUS } from 'src/modules/user/constants/user.list.consta
 import { ExpertsListByCategoryResponseDto } from 'src/modules/user/dtos/response/experts.list.by.category.response.dto';
 import { UserListResponseDto } from 'src/modules/user/dtos/response/user.list.response.dto';
 import { ENUM_ACTIVE_USER_STATUS } from 'src/modules/user/enums/user.enum';
-import {
-    IExpertsByCategoryDoc,
-    IUserDoc,
-} from 'src/modules/user/interfaces/user.interface';
+import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
 import { UserService } from 'src/modules/user/services/user.service';
 
 @ApiTags('modules.shared.expert')
@@ -111,83 +108,18 @@ export class ExpertUserController {
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('get/all/by-category')
-    async getExpertsGroupByCategory(): Promise<
-        IResponsePaging<ExpertsListByCategoryResponseDto>
-    > {
-        const pipeline = [
-            {
-                $match: {
-                    role: '16c4b7f3-0c6b-4a99-a560-3ee99c1b0730',
-                },
-            },
-            {
-                $unwind: {
-                    path: '$expertise',
-                    preserveNullAndEmptyArrays: true,
-                },
-            },
-            {
-                $lookup: {
-                    from: 'Categories',
-                    localField: 'expertise',
-                    foreignField: '_id',
-                    as: 'expertise',
-                },
-            },
-            {
-                $unwind: {
-                    path: '$expertise',
-                    preserveNullAndEmptyArrays: true,
-                },
-            },
-            {
-                $group: {
-                    _id: '$expertise._id',
-                    expertiseCategory: {
-                        $first: '$expertise.category',
-                    },
-                    expertiseDescription: {
-                        $first: '$expertise.description',
-                    },
-                    users: {
-                        $push: {
-                            _id: '$_id',
-                            name: '$name',
-                            username: '$username',
-                            email: '$email',
-                            address: '$address',
-                        },
-                    },
-                },
-            },
-            {
-                $project: {
-                    _id: 0,
-                    expertiseCategoryId: '$_id',
-                    expertiseCategory: 1,
-                    expertiseDescription: 1,
-                    users: 1,
-                },
-            },
-        ];
-
-        const expertsByCategory: IExpertsByCategoryDoc[] =
-            await this.userService.groupByExpertise(pipeline);
-
-        const total: number =
-            await this.userService.getTotalAggregate(pipeline);
-        const totalPage: number = this.paginationService.totalPage(
-            total,
-            _limit
-        );
-
-        const mapped =
-            await this.userService.mapExpertsByCategoryList(expertsByCategory);
-
-        return {
-            _pagination: { total, totalPage },
-            data: mapped,
-        };
+    async getAllExpertsGroupByExpertise(
+        @PaginationQuery({
+            availableSearch: EXPERT_DEFAULT_AVAILABLE_SEARCH,
+        })
+        { _search, _limit, _offset, _order }: PaginationListDto
+    ): Promise<IResponsePaging<ExpertsListByCategoryResponseDto>> {
+        return await this.userService.getAllExpertsGroupByExpertise({
+            _search,
+            _limit,
+            _offset,
+            _order,
+        });
     }
     // endregion
 }

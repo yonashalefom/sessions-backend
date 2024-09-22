@@ -4,6 +4,7 @@ import {
     IDatabaseCreateOptions,
     IDatabaseDeleteManyOptions,
     IDatabaseExistOptions,
+    IDatabaseFindAllAggregateOptions,
     IDatabaseFindAllOptions,
     IDatabaseGetTotalOptions,
     IDatabaseOptions,
@@ -12,6 +13,10 @@ import {
 } from 'src/common/database/interfaces/database.interface';
 import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { ConfigService } from '@nestjs/config';
+import { PaginationListDto } from 'src/common/pagination/dtos/pagination.list.dto';
+import { IPaginationOrder } from 'src/common/pagination/interfaces/pagination.interface';
+import { PaginationService } from 'src/common/pagination/services/pagination.service';
+import { IResponsePaging } from 'src/common/response/interfaces/response.interface';
 import { IAuthPassword } from 'src/modules/auth/interfaces/auth.interface';
 import { plainToInstance } from 'class-transformer';
 import { Document, PipelineStage } from 'mongoose';
@@ -60,7 +65,8 @@ export class UserService implements IUserService {
         private readonly userRepository: UserRepository,
         private readonly helperDateService: HelperDateService,
         private readonly configService: ConfigService,
-        private readonly helperStringService: HelperStringService
+        private readonly helperStringService: HelperStringService,
+        private readonly paginationService: PaginationService
     ) {
         this.usernamePrefix = this.configService.get<string>(
             'user.usernamePrefix'
@@ -76,6 +82,13 @@ export class UserService implements IUserService {
         options?: IDatabaseFindAllOptions
     ): Promise<UserDoc[]> {
         return this.userRepository.findAll<UserDoc>(find, options);
+    }
+
+    async findAllAggregate(
+        pipeline: PipelineStage[],
+        options?: IDatabaseFindAllAggregateOptions
+    ): Promise<any[]> {
+        return this.userRepository.findAllAggregate(pipeline, options);
     }
 
     async getTotal(
@@ -130,10 +143,93 @@ export class UserService implements IUserService {
         });
     }
 
-    async groupByExpertise(
-        pipeline: PipelineStage[]
-    ): Promise<IExpertsByCategoryDoc[]> {
-        return this.userRepository.aggregate(pipeline);
+    async getAllExpertsGroupByExpertise(
+        options: Partial<PaginationListDto>
+    ): Promise<IResponsePaging<ExpertsListByCategoryResponseDto>> {
+        const { _search, _limit, _offset, _order } = options;
+
+        const find: Record<string, any> = {
+            role: '16c4b7f3-0c6b-4a99-a560-3ee99c1b0730',
+            ..._search,
+        };
+
+        // region Aggregation Pipeline
+        const pipeline = [
+            {
+                $match: find,
+            },
+            {
+                $unwind: {
+                    path: '$expertise',
+                    preserveNullAndEmptyArrays: true,
+                },
+            },
+            {
+                $lookup: {
+                    from: 'Categories',
+                    localField: 'expertise',
+                    foreignField: '_id',
+                    as: 'expertise',
+                },
+            },
+            {
+                $unwind: {
+                    path: '$expertise',
+                    preserveNullAndEmptyArrays: true,
+                },
+            },
+            {
+                $group: {
+                    _id: '$expertise._id',
+                    expertiseCategory: {
+                        $first: '$expertise.category',
+                    },
+                    expertiseDescription: {
+                        $first: '$expertise.description',
+                    },
+                    users: {
+                        $push: '$$ROOT',
+                    },
+                },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    expertiseCategoryId: '$_id',
+                    expertiseCategory: 1,
+                    expertiseDescription: 1,
+                    users: 1,
+                },
+            },
+        ];
+        // endregion
+
+        const expertsByCategory = await this.findAllAggregate(pipeline, {
+            paging: {
+                limit: _limit,
+                offset: _offset,
+            },
+            order: _order as IPaginationOrder,
+        });
+
+        console.log(JSON.stringify(expertsByCategory, null, 2));
+
+        const expertsByCategory1 = await this.findAllAggregate(pipeline);
+
+        console.log(JSON.stringify(expertsByCategory1, null, 2));
+
+        const total: number = await this.getTotalAggregate(pipeline);
+        const totalPage: number = this.paginationService.totalPage(
+            total,
+            _limit
+        );
+
+        const mapped = await this.mapExpertsByCategoryList(expertsByCategory);
+
+        return {
+            _pagination: { total, totalPage },
+            data: mapped,
+        };
     }
 
     async findOneWithRoleAndCountry(
