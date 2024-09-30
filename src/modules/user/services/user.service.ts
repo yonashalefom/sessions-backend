@@ -161,7 +161,7 @@ export class UserService implements IUserService {
             {
                 $unwind: {
                     path: '$expertise',
-                    preserveNullAndEmptyArrays: true,
+                    preserveNullAndEmptyArrays: false,
                 },
             },
             {
@@ -193,12 +193,20 @@ export class UserService implements IUserService {
                 },
             },
             {
+                $addFields: {
+                    userCount: {
+                        $size: '$users',
+                    },
+                },
+            },
+            {
                 $project: {
                     _id: 0,
                     expertiseCategoryId: '$_id',
                     expertiseCategory: 1,
                     expertiseDescription: 1,
                     users: 1,
+                    userCount: 1, // Optionally include the userCount if you want it in the result
                 },
             },
         ];
@@ -211,12 +219,6 @@ export class UserService implements IUserService {
             },
             order: _order as IPaginationOrder,
         });
-
-        console.log(JSON.stringify(expertsByCategory, null, 2));
-
-        const expertsByCategory1 = await this.findAllAggregate(pipeline);
-
-        console.log(JSON.stringify(expertsByCategory1, null, 2));
 
         const total: number = await this.getTotalAggregate(pipeline);
         const totalPage: number = this.paginationService.totalPage(

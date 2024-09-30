@@ -35,3 +35,26 @@ export function UserExpertsListDoc(): MethodDecorator {
         })
     );
 }
+
+export function GetExpertsByCategoryDoc(): MethodDecorator {
+    return applyDecorators(
+        Doc({
+            summary: 'get all experts',
+        }),
+        DocRequest({
+            queries: [
+                ...UserDocQueryStatus,
+                ...UserDocQueryRole,
+                ...UserDocQueryCountry,
+            ],
+        }),
+        DocAuth({
+            xApiKey: true,
+            jwtAccessToken: true,
+        }),
+        DocGuard({ role: true, policy: true }),
+        DocResponsePaging<UserListResponseDto>('expert.getExpertsByCategory', {
+            dto: UserListResponseDto,
+        })
+    );
+}

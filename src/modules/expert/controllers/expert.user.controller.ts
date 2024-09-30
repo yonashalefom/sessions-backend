@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
     PaginationQuery,
@@ -6,12 +6,20 @@ import {
 } from 'src/common/pagination/decorators/pagination.decorator';
 import { PaginationListDto } from 'src/common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from 'src/common/pagination/services/pagination.service';
+import { RequestRequiredPipe } from 'src/common/request/pipes/request.required.pipe';
 import { ResponsePaging } from 'src/common/response/decorators/response.decorator';
 import { IResponsePaging } from 'src/common/response/interfaces/response.interface';
 import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
 import { AuthJwtAccessProtected } from 'src/modules/auth/decorators/auth.jwt.decorator';
-import { EXPERT_DEFAULT_AVAILABLE_SEARCH } from 'src/modules/expert/constants/expert.list.constant';
-import { UserExpertsListDoc } from 'src/modules/expert/docs/expert.doc';
+import {
+    EXPERT_DEFAULT_AVAILABLE_ORDER_BY,
+    EXPERT_DEFAULT_AVAILABLE_SEARCH,
+} from 'src/modules/expert/constants/expert.list.constant';
+import {
+    GetExpertsByCategoryDoc,
+    UserExpertsListDoc,
+} from 'src/modules/expert/docs/expert.doc';
+import { CategoryParsePipe } from 'src/modules/expert/pipes/category.parse.pipe';
 import {
     PolicyAbilityProtected,
     PolicyRoleProtected,
@@ -21,6 +29,7 @@ import {
     ENUM_POLICY_ROLE_TYPE,
     ENUM_POLICY_SUBJECT,
 } from 'src/modules/policy/enums/policy.enum';
+import { SettingDoc } from 'src/modules/setting/repository/entities/setting.entity';
 import { USER_DEFAULT_STATUS } from 'src/modules/user/constants/user.list.constant';
 import { ExpertsListByCategoryResponseDto } from 'src/modules/user/dtos/response/experts.list.by.category.response.dto';
 import { UserListResponseDto } from 'src/modules/user/dtos/response/user.list.response.dto';
@@ -97,6 +106,69 @@ export class ExpertUserController {
     }
     // endregion
 
+    // region Get Experts by Expertise
+    @GetExpertsByCategoryDoc()
+    @ResponsePaging('expert.getExpertsByCategory')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.EXPERT,
+        action: [ENUM_POLICY_ACTION.READ],
+    })
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
+    @AuthJwtAccessProtected()
+    @ApiKeyProtected()
+    @Get('get/by/expertise/:expertiseId')
+    async getExpertsByExpertise(
+        @PaginationQuery({
+            availableSearch: EXPERT_DEFAULT_AVAILABLE_SEARCH,
+        })
+        { _search, _limit, _offset, _order }: PaginationListDto,
+        @PaginationQueryFilterInEnum(
+            'status',
+            USER_DEFAULT_STATUS,
+            ENUM_ACTIVE_USER_STATUS
+        )
+        status: Record<string, any>,
+        @Param('expertiseId', RequestRequiredPipe, CategoryParsePipe)
+        expertiseId: SettingDoc
+    ): Promise<IResponsePaging<UserListResponseDto>> {
+        const role = {
+            role: '16c4b7f3-0c6b-4a99-a560-3ee99c1b0730',
+        };
+
+        const expertise = { expertise: { $in: [expertiseId] } };
+
+        const find: Record<string, any> = {
+            ..._search,
+            ...status,
+            ...role,
+            ...expertise,
+        };
+
+        const experts: IUserDoc[] =
+            await this.userService.findAllWithRoleAndCountry(find, {
+                paging: {
+                    limit: _limit,
+                    offset: _offset,
+                },
+                order: _order,
+            });
+        const total: number = await this.userService.getTotal(find);
+        const totalPage: number = this.paginationService.totalPage(
+            total,
+            _limit
+        );
+
+        console.log(JSON.stringify(experts, null, 2));
+
+        const mapped = await this.userService.mapList(experts);
+
+        return {
+            _pagination: { total, totalPage },
+            data: mapped,
+        };
+    }
+    // endregion
+
     // region Get All Experts (Group By Category)
     @UserExpertsListDoc()
     @ResponsePaging('expert.getAllExpertsByCategory')
@@ -111,6 +183,7 @@ export class ExpertUserController {
     async getAllExpertsGroupByExpertise(
         @PaginationQuery({
             availableSearch: EXPERT_DEFAULT_AVAILABLE_SEARCH,
+            availableOrderBy: EXPERT_DEFAULT_AVAILABLE_ORDER_BY,
         })
         { _search, _limit, _offset, _order }: PaginationListDto
     ): Promise<IResponsePaging<ExpertsListByCategoryResponseDto>> {
