@@ -122,11 +122,11 @@ export class CategoryService implements ICategoryService {
     }
 
     async mapList(
-        countries: CategoryDoc[] | CategoryEntity[]
+        categories: CategoryDoc[] | CategoryEntity[]
     ): Promise<CategoryListResponseDto[]> {
         return plainToInstance(
             CategoryListResponseDto,
-            countries.map((e: CategoryDoc | CategoryEntity) =>
+            categories.map((e: CategoryDoc | CategoryEntity) =>
                 e instanceof Document ? e.toObject() : e
             )
         );

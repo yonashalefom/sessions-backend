@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { UserListResponseDto } from 'src/modules/user/dtos/response/user.list.response.dto';
 
 export class ExpertsListByCategoryResponseDto {
@@ -25,5 +26,6 @@ export class ExpertsListByCategoryResponseDto {
         example: faker.internet.email(),
         maxLength: 100,
     })
+    @Type(() => UserListResponseDto)
     users: [UserListResponseDto];
 }

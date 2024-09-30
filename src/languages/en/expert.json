@@ -2,6 +2,7 @@
     "updateAvailabilitySuccess": "Availability times updated successfully",
     "updateExpertiseSuccess": "Expertise updated successfully",
     "getAllExperts": "Experts listed successfully",
+    "getExpertsByCategory": "Experts in the specified category listed successfully",
     "error": {
         "inactive": "Expert is inactive.",
         "expertiseNotFound": "Expertise not found."

@@ -23,19 +23,19 @@ export class CategoryEntity extends DatabaseEntityAbstract {
         required: false,
         unique: true,
         trim: true,
-        index: true,
-        maxlength: 100,
+        maxlength: 500,
+        minlength: 15,
     })
-    categoryImage: string;
+    description: string;
 
     @DatabaseProp({
         required: false,
         unique: true,
         trim: true,
-        maxlength: 500,
-        minlength: 15,
+        index: true,
+        maxlength: 100,
     })
-    description: string;
+    categoryImage: string;
 
     @DatabaseProp({
         required: true,
