@@ -32,6 +32,15 @@ export class CategoryGetResponseDto extends DatabaseDto {
     categoryImage: string;
 
     @ApiProperty({
+        required: true,
+        type: String,
+        description: 'Category Slug',
+        maxLength: 100,
+        minLength: 1,
+    })
+    slug: string;
+
+    @ApiProperty({
         description: 'Date created at',
         example: faker.date.recent(),
         required: true,

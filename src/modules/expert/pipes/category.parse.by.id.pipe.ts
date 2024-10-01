@@ -4,7 +4,7 @@ import { CategoryService } from 'src/modules/category/services/category.service'
 import { ENUM_SETTING_STATUS_CODE_ERROR } from 'src/modules/setting/enums/setting.status-code.enum';
 
 @Injectable()
-export class CategoryParsePipe implements PipeTransform {
+export class CategoryParseByIdPipe implements PipeTransform {
     constructor(private readonly categoryService: CategoryService) {}
 
     async transform(value: any): Promise<CategoryDoc> {

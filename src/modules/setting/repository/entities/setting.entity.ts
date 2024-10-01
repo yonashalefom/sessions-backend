@@ -42,4 +42,4 @@ export class SettingEntity extends DatabaseEntityAbstract {
 }
 
 export const SettingSchema = DatabaseSchema(SettingEntity);
-export type SettingDoc = IDatabaseDocument<SettingEntity>;
+export type CategoryDoc = IDatabaseDocument<SettingEntity>;

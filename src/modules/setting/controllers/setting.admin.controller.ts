@@ -41,7 +41,7 @@ import { SettingUpdateRequestDto } from 'src/modules/setting/dtos/request/settin
 import { SettingGetResponseDto } from 'src/modules/setting/dtos/response/setting.get.response.dto';
 import { SettingListResponseDto } from 'src/modules/setting/dtos/response/setting.list.response.dto';
 import { SettingParsePipe } from 'src/modules/setting/pipes/setting.parse.pipe';
-import { SettingDoc } from 'src/modules/setting/repository/entities/setting.entity';
+import { CategoryDoc } from 'src/modules/setting/repository/entities/setting.entity';
 import { SettingService } from 'src/modules/setting/services/setting.service';
 import { DatabaseIdResponseDto } from 'src/common/database/dtos/response/database.id.response.dto';
 
@@ -76,13 +76,16 @@ export class SettingAdminController {
             ..._search,
         };
 
-        const settings: SettingDoc[] = await this.settingService.findAll(find, {
-            paging: {
-                limit: _limit,
-                offset: _offset,
-            },
-            order: _order,
-        });
+        const settings: CategoryDoc[] = await this.settingService.findAll(
+            find,
+            {
+                paging: {
+                    limit: _limit,
+                    offset: _offset,
+                },
+                order: _order,
+            }
+        );
         const mapSettings: SettingListResponseDto[] =
             await this.settingService.mapList(settings);
         const total: number = await this.settingService.getTotal(find);
@@ -108,7 +111,7 @@ export class SettingAdminController {
     @Get('/get/:setting')
     async get(
         @Param('setting', RequestRequiredPipe, SettingParsePipe)
-        setting: SettingDoc
+        setting: CategoryDoc
     ): Promise<IResponse<SettingGetResponseDto>> {
         const mapSetting = await this.settingService.mapGet(setting);
         return { data: mapSetting };
@@ -125,7 +128,7 @@ export class SettingAdminController {
     @Put('/update/:setting')
     async update(
         @Param('setting', RequestRequiredPipe, SettingParsePipe)
-        setting: SettingDoc,
+        setting: CategoryDoc,
         @Body()
         body: SettingUpdateRequestDto
     ): Promise<IResponse<DatabaseIdResponseDto>> {

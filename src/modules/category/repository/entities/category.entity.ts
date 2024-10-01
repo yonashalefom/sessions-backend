@@ -39,6 +39,15 @@ export class CategoryEntity extends DatabaseEntityAbstract {
 
     @DatabaseProp({
         required: true,
+        unique: true,
+        trim: true,
+        index: true,
+        maxlength: 100,
+    })
+    slug: string;
+
+    @DatabaseProp({
+        required: true,
         default: true,
         index: true,
         type: Boolean,

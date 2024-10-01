@@ -19,7 +19,8 @@ import {
     GetExpertsByCategoryDoc,
     UserExpertsListDoc,
 } from 'src/modules/expert/docs/expert.doc';
-import { CategoryParsePipe } from 'src/modules/expert/pipes/category.parse.pipe';
+import { CategoryParseByIdPipe } from 'src/modules/expert/pipes/category.parse.by.id.pipe';
+import { CategoryParseBySlugPipe } from 'src/modules/expert/pipes/category.parse.by.slug.pipe';
 import {
     PolicyAbilityProtected,
     PolicyRoleProtected,
@@ -29,7 +30,7 @@ import {
     ENUM_POLICY_ROLE_TYPE,
     ENUM_POLICY_SUBJECT,
 } from 'src/modules/policy/enums/policy.enum';
-import { SettingDoc } from 'src/modules/setting/repository/entities/setting.entity';
+import { CategoryDoc } from 'src/modules/setting/repository/entities/setting.entity';
 import { USER_DEFAULT_STATUS } from 'src/modules/user/constants/user.list.constant';
 import { ExpertsListByCategoryResponseDto } from 'src/modules/user/dtos/response/experts.list.by.category.response.dto';
 import { UserListResponseDto } from 'src/modules/user/dtos/response/user.list.response.dto';
@@ -106,7 +107,7 @@ export class ExpertUserController {
     }
     // endregion
 
-    // region Get Experts by Expertise
+    // region Get Experts by Expertise Id
     @GetExpertsByCategoryDoc()
     @ResponsePaging('expert.getExpertsByCategory')
     @PolicyAbilityProtected({
@@ -128,14 +129,14 @@ export class ExpertUserController {
             ENUM_ACTIVE_USER_STATUS
         )
         status: Record<string, any>,
-        @Param('expertiseId', RequestRequiredPipe, CategoryParsePipe)
-        expertiseId: SettingDoc
+        @Param('expertiseId', RequestRequiredPipe, CategoryParseByIdPipe)
+        expertiseCategoryDoc: CategoryDoc
     ): Promise<IResponsePaging<UserListResponseDto>> {
         const role = {
             role: '16c4b7f3-0c6b-4a99-a560-3ee99c1b0730',
         };
 
-        const expertise = { expertise: { $in: [expertiseId] } };
+        const expertise = { expertise: { $in: [expertiseCategoryDoc._id] } };
 
         const find: Record<string, any> = {
             ..._search,
@@ -158,7 +159,67 @@ export class ExpertUserController {
             _limit
         );
 
-        console.log(JSON.stringify(experts, null, 2));
+        const mapped = await this.userService.mapList(experts);
+
+        return {
+            _pagination: { total, totalPage },
+            data: mapped,
+        };
+    }
+    // endregion
+
+    // region Get Experts by Expertise Slug
+    @GetExpertsByCategoryDoc()
+    @ResponsePaging('expert.getExpertsByCategory')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.EXPERT,
+        action: [ENUM_POLICY_ACTION.READ],
+    })
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
+    @AuthJwtAccessProtected()
+    @ApiKeyProtected()
+    @Get('get/by/expertise/slug/:expertiseSlug')
+    async getExpertsByExpertiseSlug(
+        @PaginationQuery({
+            availableSearch: EXPERT_DEFAULT_AVAILABLE_SEARCH,
+        })
+        { _search, _limit, _offset, _order }: PaginationListDto,
+        @PaginationQueryFilterInEnum(
+            'status',
+            USER_DEFAULT_STATUS,
+            ENUM_ACTIVE_USER_STATUS
+        )
+        status: Record<string, any>,
+        @Param('expertiseSlug', RequestRequiredPipe, CategoryParseBySlugPipe)
+        expertiseCategoryDoc: CategoryDoc
+    ): Promise<IResponsePaging<UserListResponseDto>> {
+        console.log(JSON.stringify(expertiseCategoryDoc, null, 2));
+        const role = {
+            role: '16c4b7f3-0c6b-4a99-a560-3ee99c1b0730',
+        };
+
+        const expertise = { expertise: { $in: [expertiseCategoryDoc._id] } };
+
+        const find: Record<string, any> = {
+            ..._search,
+            ...status,
+            ...role,
+            ...expertise,
+        };
+
+        const experts: IUserDoc[] =
+            await this.userService.findAllWithRoleAndCountry(find, {
+                paging: {
+                    limit: _limit,
+                    offset: _offset,
+                },
+                order: _order,
+            });
+        const total: number = await this.userService.getTotal(find);
+        const totalPage: number = this.paginationService.totalPage(
+            total,
+            _limit
+        );
 
         const mapped = await this.userService.mapList(experts);
 

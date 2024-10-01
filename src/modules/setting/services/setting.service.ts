@@ -18,7 +18,7 @@ import { SettingGetResponseDto } from 'src/modules/setting/dtos/response/setting
 import { SettingListResponseDto } from 'src/modules/setting/dtos/response/setting.list.response.dto';
 import { ISettingService } from 'src/modules/setting/interfaces/setting.service.interface';
 import {
-    SettingDoc,
+    CategoryDoc,
     SettingEntity,
 } from 'src/modules/setting/repository/entities/setting.entity';
 import { SettingRepository } from 'src/modules/setting/repository/repositories/setting.repository';
@@ -44,28 +44,28 @@ export class SettingService implements ISettingService {
     async findAll(
         find?: Record<string, any>,
         options?: IDatabaseFindAllOptions
-    ): Promise<SettingDoc[]> {
+    ): Promise<CategoryDoc[]> {
         return this.settingRepository.findAll(find, options);
     }
 
     async findOne(
         find: Record<string, any>,
         options?: IDatabaseOptions
-    ): Promise<SettingDoc> {
+    ): Promise<CategoryDoc> {
         return this.settingRepository.findOne(find, options);
     }
 
     async findOneById(
         _id: string,
         options?: IDatabaseOptions
-    ): Promise<SettingDoc> {
+    ): Promise<CategoryDoc> {
         return this.settingRepository.findOneById(_id, options);
     }
 
     async findOneByName(
         name: string,
         options?: IDatabaseOptions
-    ): Promise<SettingDoc> {
+    ): Promise<CategoryDoc> {
         return this.settingRepository.findOne({ name }, options);
     }
 
@@ -79,7 +79,7 @@ export class SettingService implements ISettingService {
     async create(
         { name, description, type, value }: SettingCreateRequestDto,
         options?: IDatabaseCreateOptions
-    ): Promise<SettingDoc> {
+    ): Promise<CategoryDoc> {
         const create: SettingEntity = new SettingEntity();
         create.name = name;
         create.description = description;
@@ -90,10 +90,10 @@ export class SettingService implements ISettingService {
     }
 
     async update(
-        repository: SettingDoc,
+        repository: CategoryDoc,
         { description, value }: SettingUpdateRequestDto,
         options?: IDatabaseSaveOptions
-    ): Promise<SettingDoc> {
+    ): Promise<CategoryDoc> {
         repository.description = description;
         repository.value = value;
 
@@ -159,7 +159,7 @@ export class SettingService implements ISettingService {
     }
 
     async mapList<T = any>(
-        settings: SettingDoc[]
+        settings: CategoryDoc[]
     ): Promise<SettingListResponseDto<T>[]> {
         return settings.map(e => {
             const parseValue = this.getValue<T>(e.type, e.value);
@@ -169,7 +169,7 @@ export class SettingService implements ISettingService {
     }
 
     async mapGet<T = any>(
-        setting: SettingDoc
+        setting: CategoryDoc
     ): Promise<SettingGetResponseDto<T>> {
         const parseValue = this.getValue<T>(setting.type, setting.value);
 

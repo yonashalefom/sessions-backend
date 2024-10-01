@@ -11,22 +11,22 @@ import { SettingCreateRequestDto } from 'src/modules/setting/dtos/request/settin
 import { SettingUpdateRequestDto } from 'src/modules/setting/dtos/request/setting.update.request.dto';
 import { SettingGetResponseDto } from 'src/modules/setting/dtos/response/setting.get.response.dto';
 import { SettingListResponseDto } from 'src/modules/setting/dtos/response/setting.list.response.dto';
-import { SettingDoc } from 'src/modules/setting/repository/entities/setting.entity';
+import { CategoryDoc } from 'src/modules/setting/repository/entities/setting.entity';
 
 export interface ISettingService {
     findAll(
         find?: Record<string, any>,
         options?: IDatabaseFindAllOptions
-    ): Promise<SettingDoc[]>;
+    ): Promise<CategoryDoc[]>;
     findOne(
         find: Record<string, any>,
         options?: IDatabaseOptions
-    ): Promise<SettingDoc>;
-    findOneById(_id: string, options?: IDatabaseOptions): Promise<SettingDoc>;
+    ): Promise<CategoryDoc>;
+    findOneById(_id: string, options?: IDatabaseOptions): Promise<CategoryDoc>;
     findOneByName(
         name: string,
         options?: IDatabaseOptions
-    ): Promise<SettingDoc>;
+    ): Promise<CategoryDoc>;
     getTotal(
         find?: Record<string, any>,
         options?: IDatabaseGetTotalOptions
@@ -34,12 +34,12 @@ export interface ISettingService {
     create(
         { name, description, type, value }: SettingCreateRequestDto,
         options?: IDatabaseCreateOptions
-    ): Promise<SettingDoc>;
+    ): Promise<CategoryDoc>;
     update(
-        repository: SettingDoc,
+        repository: CategoryDoc,
         { description, value }: SettingUpdateRequestDto,
         options?: IDatabaseSaveOptions
-    ): Promise<SettingDoc>;
+    ): Promise<CategoryDoc>;
     deleteMany(
         find: Record<string, any>,
         options?: IDatabaseDeleteManyOptions
@@ -49,7 +49,7 @@ export interface ISettingService {
     getTimezone(): Promise<string>;
     getTimezoneOffset(): Promise<string>;
     mapList<T = any>(
-        settings: SettingDoc[]
+        settings: CategoryDoc[]
     ): Promise<SettingListResponseDto<T>[]>;
-    mapGet<T = any>(setting: SettingDoc): Promise<SettingGetResponseDto<T>>;
+    mapGet<T = any>(setting: CategoryDoc): Promise<SettingGetResponseDto<T>>;
 }

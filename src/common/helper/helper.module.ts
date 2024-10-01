@@ -7,6 +7,7 @@ import { HelperEncryptionService } from 'src/common/helper/services/helper.encry
 import { HelperHashService } from 'src/common/helper/services/helper.hash.service';
 import { HelperNumberService } from 'src/common/helper/services/helper.number.service';
 import { HelperStringService } from 'src/common/helper/services/helper.string.service';
+import { HelperURLService } from 'src/common/helper/services/helper.url.service';
 
 @Global()
 @Module({})
@@ -21,6 +22,7 @@ export class HelperModule {
                 HelperHashService,
                 HelperNumberService,
                 HelperStringService,
+                HelperURLService,
             ],
             exports: [
                 HelperArrayService,
@@ -29,6 +31,7 @@ export class HelperModule {
                 HelperHashService,
                 HelperNumberService,
                 HelperStringService,
+                HelperURLService,
             ],
             controllers: [],
             imports: [

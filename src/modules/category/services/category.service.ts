@@ -10,6 +10,7 @@ import {
     IDatabaseGetTotalOptions,
     IDatabaseOptions,
 } from 'src/common/database/interfaces/database.interface';
+import { HelperURLService } from 'src/common/helper/services/helper.url.service';
 import { CategoryCreateRequestDto } from 'src/modules/category/dtos/request/category.create.request.dto';
 import { CategoryGetResponseDto } from 'src/modules/category/dtos/response/category.get.response.dto';
 import { CategoryListResponseDto } from 'src/modules/category/dtos/response/category.list.response.dto';
@@ -23,7 +24,10 @@ import { CategoryRepository } from 'src/modules/category/repository/repositories
 
 @Injectable()
 export class CategoryService implements ICategoryService {
-    constructor(private readonly categoryRepository: CategoryRepository) {}
+    constructor(
+        private readonly categoryRepository: CategoryRepository,
+        private readonly helperURLService: HelperURLService
+    ) {}
 
     async findAll(
         find?: Record<string, any>,
@@ -93,6 +97,7 @@ export class CategoryService implements ICategoryService {
         const create: CategoryEntity = new CategoryEntity();
         create.category = category;
         create.description = description;
+        create.slug = this.helperURLService.slugify(category);
         create.isActive = true;
 
         return this.categoryRepository.create<CategoryEntity>(create, options);
