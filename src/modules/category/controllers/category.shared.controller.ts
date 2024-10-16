@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
     PaginationQuery,
@@ -6,18 +6,30 @@ import {
 } from 'src/common/pagination/decorators/pagination.decorator';
 import { PaginationListDto } from 'src/common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from 'src/common/pagination/services/pagination.service';
-import { ResponsePaging } from 'src/common/response/decorators/response.decorator';
-import { IResponsePaging } from 'src/common/response/interfaces/response.interface';
+import { RequestRequiredPipe } from 'src/common/request/pipes/request.required.pipe';
+import {
+    Response,
+    ResponsePaging,
+} from 'src/common/response/decorators/response.decorator';
+import {
+    IResponse,
+    IResponsePaging,
+} from 'src/common/response/interfaces/response.interface';
 import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
 import { AuthJwtAccessProtected } from 'src/modules/auth/decorators/auth.jwt.decorator';
 import {
     CATEGORY_DEFAULT_AVAILABLE_SEARCH,
     CATEGORY_DEFAULT_IS_ACTIVE,
 } from 'src/modules/category/constants/category.list.constant';
-import { CategoryListSharedDoc } from 'src/modules/category/docs/user.shared.doc';
+import {
+    CategoryDetailsGetDoc,
+    CategoryListSharedDoc,
+} from 'src/modules/category/docs/category.shared.doc';
+import { CategoryGetShortResponseDto } from 'src/modules/category/dtos/response/category.get.response.dto';
 import { CategoryShortResponseDto } from 'src/modules/category/dtos/response/category.short.response.dto';
 import { CategoryDoc } from 'src/modules/category/repository/entities/category.entity';
 import { CategoryService } from 'src/modules/category/services/category.service';
+import { CategoryParseBySlugPipe } from 'src/modules/expert/pipes/category.parse.by.slug.pipe';
 import {
     PolicyAbilityProtected,
     PolicyRoleProtected,
@@ -88,5 +100,25 @@ export class CategorySharedController {
         };
     }
 
+    // endregion
+
+    // region Get Category Details By Slug
+    @CategoryDetailsGetDoc()
+    @Response('category.get')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.CATEGORY,
+        action: [ENUM_POLICY_ACTION.READ],
+    })
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
+    @AuthJwtAccessProtected()
+    @Get('/get/:category')
+    async get(
+        @Param('category', RequestRequiredPipe, CategoryParseBySlugPipe)
+        category: CategoryDoc
+    ): Promise<IResponse<CategoryGetShortResponseDto>> {
+        const mapped: CategoryGetShortResponseDto =
+            await this.categoryService.mapGetShort(category);
+        return { data: mapped };
+    }
     // endregion
 }
