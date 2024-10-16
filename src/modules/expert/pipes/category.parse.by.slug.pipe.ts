@@ -8,9 +8,11 @@ export class CategoryParseBySlugPipe implements PipeTransform {
     constructor(private readonly categoryService: CategoryService) {}
 
     async transform(value: any): Promise<CategoryDoc> {
+        console.log('Slug is: ' + value);
         const category: CategoryDoc = await this.categoryService.findOne({
             slug: value.toLowerCase(),
         });
+
         if (!category) {
             throw new NotFoundException({
                 statusCode: ENUM_SETTING_STATUS_CODE_ERROR.NOT_FOUND,

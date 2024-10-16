@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty, OmitType } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { DatabaseDto } from 'src/common/database/dtos/database.dto';
 
@@ -83,4 +83,31 @@ export class CategoryGetResponseDto extends DatabaseDto {
         required: false,
     })
     isActive: boolean;
+}
+
+export class CategoryGetShortResponseDto extends OmitType(
+    CategoryGetResponseDto,
+    [
+        'createdAt',
+        'updatedAt',
+        'deletedAt',
+        'deleted',
+        '__v',
+        'isActive',
+    ] as const
+) {
+    @Exclude()
+    createdAt: Date;
+
+    @Exclude()
+    updatedAt: Date;
+
+    @Exclude()
+    deleted: boolean;
+
+    @Exclude()
+    isActive: boolean;
+
+    @Exclude()
+    __v: boolean;
 }

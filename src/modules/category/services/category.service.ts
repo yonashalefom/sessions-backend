@@ -12,7 +12,10 @@ import {
 } from 'src/common/database/interfaces/database.interface';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
 import { CategoryCreateRequestDto } from 'src/modules/category/dtos/request/category.create.request.dto';
-import { CategoryGetResponseDto } from 'src/modules/category/dtos/response/category.get.response.dto';
+import {
+    CategoryGetResponseDto,
+    CategoryGetShortResponseDto,
+} from 'src/modules/category/dtos/response/category.get.response.dto';
 import { CategoryListResponseDto } from 'src/modules/category/dtos/response/category.list.response.dto';
 import { CategoryShortResponseDto } from 'src/modules/category/dtos/response/category.short.response.dto';
 import { ICategoryService } from 'src/modules/category/interfaces/category.service.interface';
@@ -142,6 +145,15 @@ export class CategoryService implements ICategoryService {
     ): Promise<CategoryGetResponseDto> {
         return plainToInstance(
             CategoryGetResponseDto,
+            category instanceof Document ? category.toObject() : category
+        );
+    }
+
+    async mapGetShort(
+        category: CategoryDoc | CategoryEntity
+    ): Promise<CategoryGetShortResponseDto> {
+        return plainToInstance(
+            CategoryGetShortResponseDto,
             category instanceof Document ? category.toObject() : category
         );
     }
