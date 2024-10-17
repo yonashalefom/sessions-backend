@@ -38,3 +38,24 @@ export class UserActiveParsePipe implements PipeTransform {
         return user;
     }
 }
+
+@Injectable()
+export class UserExpertPipe implements PipeTransform {
+    constructor(private readonly userService: UserService) {}
+
+    async transform(value: string): Promise<UserDoc> {
+        const expert: UserDoc = await this.userService.findOne({
+            username: value,
+            role: '16c4b7f3-0c6b-4a99-a560-3ee99c1b0730',
+        });
+
+        if (!expert) {
+            throw new NotFoundException({
+                statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
+                message: 'expert.error.notFound',
+            });
+        }
+
+        return expert;
+    }
+}

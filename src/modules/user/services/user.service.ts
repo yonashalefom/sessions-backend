@@ -629,6 +629,15 @@ export class UserService implements IUserService {
         );
     }
 
+    async mapProfileShort(
+        user: IUserDoc | IUserEntity
+    ): Promise<UserListResponseDto> {
+        return plainToInstance(
+            UserListResponseDto,
+            user instanceof Document ? user.toObject() : user
+        );
+    }
+
     async mapList(
         users: IUserDoc[] | IUserEntity[]
     ): Promise<UserListResponseDto[]> {
