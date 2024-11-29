@@ -21,11 +21,9 @@ import { IAuthPassword } from 'src/modules/auth/interfaces/auth.interface';
 import { plainToInstance } from 'class-transformer';
 import { Document, PipelineStage } from 'mongoose';
 import { DatabaseQueryContain } from 'src/common/database/decorators/database.decorator';
-import { ExpertUpdateAvailabilityRequestDto } from 'src/modules/user/dtos/request/user.update-availability.dto';
 import { UpdateExpertiseRequestDto } from 'src/modules/user/dtos/request/user.update-expertise.dto';
 import { ExpertsListByCategoryResponseDto } from 'src/modules/user/dtos/response/experts.list.by.category.response.dto';
 import { IUserService } from 'src/modules/user/interfaces/user.service.interface';
-import { UserAvailabilityEntity } from 'src/modules/user/repository/entities/embedded/user.availability';
 import { UserRepository } from 'src/modules/user/repository/repositories/user.repository';
 import {
     UserDoc,
@@ -502,13 +500,13 @@ export class UserService implements IUserService {
 
     async update(
         repository: UserDoc,
-        { country, name, role, availability }: UserUpdateRequestDto,
+        { country, name, role }: UserUpdateRequestDto,
         options?: IDatabaseSaveOptions
     ): Promise<UserDoc> {
         repository.country = country;
         repository.name = name;
         repository.role = role;
-        repository.availability = availability as UserAvailabilityEntity;
+        // repository.availability = availability as UserAvailabilityEntity;
 
         return this.userRepository.save(repository, options);
     }
@@ -578,15 +576,15 @@ export class UserService implements IUserService {
         return this.userRepository.save(repository, options);
     }
 
-    async updateAvailability(
-        repository: UserDoc,
-        { availability }: ExpertUpdateAvailabilityRequestDto,
-        options?: IDatabaseSaveOptions
-    ): Promise<UserDoc> {
-        repository.availability = availability as UserAvailabilityEntity;
-
-        return this.userRepository.save(repository, options);
-    }
+    // async updateAvailability(
+    //     repository: UserDoc,
+    //     { availability }: ExpertUpdateAvailabilityRequestDto,
+    //     options?: IDatabaseSaveOptions
+    // ): Promise<UserDoc> {
+    //     repository.availability = availability as UserAvailabilityEntity;
+    //
+    //     return this.userRepository.save(repository, options);
+    // }
 
     async updateExpertise(
         repository: UserDoc,

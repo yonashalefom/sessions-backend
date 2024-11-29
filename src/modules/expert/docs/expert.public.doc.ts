@@ -9,7 +9,7 @@ import {
 import { UserDocParamsId } from 'src/modules/user/constants/user.doc.constant';
 import { UserProfileResponseDto } from 'src/modules/user/dtos/response/user.profile.response.dto';
 
-export function UserGetExpertProfileDoc(): MethodDecorator {
+export function ExpertGetExpertProfileDoc(): MethodDecorator {
     return applyDecorators(
         Doc({
             summary: 'Get expert user profile.',

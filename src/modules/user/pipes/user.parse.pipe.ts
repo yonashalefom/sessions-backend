@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, PipeTransform } from '@nestjs/common';
+import { ROLE_EXPERT_ID } from 'src/modules/role/constants/role.common.constant';
 import { ENUM_USER_STATUS_CODE_ERROR } from 'src/modules/user/enums/user.status-code.enum';
 import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
 import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
@@ -10,6 +11,7 @@ export class UserParsePipe implements PipeTransform {
 
     async transform(value: string): Promise<UserDoc> {
         const user: UserDoc = await this.userService.findOneById(value);
+
         if (!user) {
             throw new NotFoundException({
                 statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
@@ -28,6 +30,7 @@ export class UserActiveParsePipe implements PipeTransform {
     async transform(value: string): Promise<IUserDoc> {
         const user =
             await this.userService.findOneWithRoleAndCountryById(value);
+
         if (!user) {
             throw new NotFoundException({
                 statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
@@ -46,7 +49,7 @@ export class UserExpertPipe implements PipeTransform {
     async transform(value: string): Promise<UserDoc> {
         const expert: UserDoc = await this.userService.findOne({
             username: value,
-            role: '16c4b7f3-0c6b-4a99-a560-3ee99c1b0730',
+            role: ROLE_EXPERT_ID,
         });
 
         if (!expert) {

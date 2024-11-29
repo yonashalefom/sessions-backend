@@ -28,6 +28,7 @@ export enum ENUM_POLICY_SUBJECT {
     ROLE = 'ROLE',
     USER = 'USER',
     EXPERT = 'EXPERT',
+    EVENT = 'EVENT',
 }
 
 export enum ENUM_POLICY_ROLE_TYPE {

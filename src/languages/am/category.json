@@ -1,0 +1,17 @@
+{
+    "list": "List of categories retrieved successfully.",
+    "get": "Category details fetched successfully.",
+    "create": "New category created successfully.",
+    "inactive": "Category marked as inactive.",
+    "active": "Category marked as active.",
+    "blocked": "Category blocked successfully.",
+    "error": {
+        "categoryExist": "Category already exists.",
+        "blocked": "Category is blocked.",
+        "deleted": "Category has been deleted.",
+        "inactive": "Category is inactive.",
+        "blockedInvalid": "Invalid blocked status.",
+        "notFound": "Category not found.",
+        "statusInvalid": "Invalid category status."
+    }
+}

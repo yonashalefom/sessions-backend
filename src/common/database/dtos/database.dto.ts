@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 
 export class DatabaseDto {
     @ApiProperty({
@@ -31,6 +32,7 @@ export class DatabaseDto {
         required: true,
         nullable: false,
     })
+    @Exclude()
     deleted: boolean;
 
     @ApiProperty({
@@ -38,6 +40,7 @@ export class DatabaseDto {
         required: false,
         nullable: true,
     })
+    @Exclude()
     deletedAt?: Date;
 
     @ApiProperty({
@@ -45,5 +48,10 @@ export class DatabaseDto {
         required: false,
         nullable: true,
     })
+    @Exclude()
     deletedBy?: string;
+
+    @ApiHideProperty()
+    @Exclude()
+    __v: string;
 }

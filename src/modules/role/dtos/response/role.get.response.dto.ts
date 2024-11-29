@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
+import { Exclude, Type } from 'class-transformer';
 import { DatabaseDto } from 'src/common/database/dtos/database.dto';
 import { ENUM_POLICY_ROLE_TYPE } from 'src/modules/policy/enums/policy.enum';
 import { RolePermissionDto } from 'src/modules/role/dtos/role.permission.dto';
@@ -46,4 +46,24 @@ export class RoleGetResponseDto extends DatabaseDto {
     })
     @Type(() => RolePermissionDto)
     permissions: RolePermissionDto;
+}
+
+export class RoleShortResponseDto extends OmitType(RoleGetResponseDto, [
+    'permissions',
+    'description',
+    'createdAt',
+    'updatedAt',
+    'isActive',
+] as const) {
+    @Exclude()
+    description?: string;
+    @Exclude()
+    // @Transform(({ value }) => value.length)
+    permissions: number;
+    @Exclude()
+    createdAt?: string;
+    @Exclude()
+    updatedAt?: string;
+    @Exclude()
+    isActive?: boolean;
 }
