@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import {
     PaginationQuery,
     PaginationQueryFilterInBoolean,
@@ -17,11 +18,7 @@ import {
 import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
 import { AuthJwtAccessProtected } from 'src/modules/auth/decorators/auth.jwt.decorator';
 import { CATEGORY_DEFAULT_IS_ACTIVE } from 'src/modules/category/constants/category.list.constant';
-import { EVENT_DEFAULT_AVAILABLE_SEARCH } from 'src/modules/events/constants/event.list.constant';
-import { EventShortResponseDto } from 'src/modules/events/dtos/response/event.get.response.dto';
 import { EventParsePipe } from 'src/modules/events/pipes/event.parse.pipe';
-import { EventDoc } from 'src/modules/events/repository/entities/event.entity';
-import { EventService } from 'src/modules/events/services/event.service';
 import {
     PolicyAbilityProtected,
     PolicyRoleProtected,
@@ -31,16 +28,21 @@ import {
     ENUM_POLICY_ROLE_TYPE,
     ENUM_POLICY_SUBJECT,
 } from 'src/modules/policy/enums/policy.enum';
+import { SCHEDULE_DEFAULT_AVAILABLE_SEARCH } from 'src/modules/schedules/constants/schedule.list.constant';
+import { ScheduleShortResponseDto } from 'src/modules/schedules/dtos/response/schedule.get.response.dto';
+import { ScheduleDoc } from 'src/modules/schedules/repository/entities/schedule.entity';
+import { ScheduleService } from 'src/modules/schedules/services/schedule.service';
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
 
+@ApiTags('modules.shared.event')
 @Controller({
     version: '1',
     path: '/events',
 })
-export class EventSharedController {
+export class ScheduleSharedController {
     constructor(
-        private readonly eventService: EventService,
+        private readonly scheduleService: ScheduleService,
         private readonly paginationService: PaginationService
     ) {}
 
@@ -61,19 +63,19 @@ export class EventSharedController {
         @Param('userId', RequestRequiredPipe, UserParsePipe)
         user: UserDoc,
         @PaginationQuery({
-            availableSearch: EVENT_DEFAULT_AVAILABLE_SEARCH,
+            availableSearch: SCHEDULE_DEFAULT_AVAILABLE_SEARCH,
         })
         { _search, _limit, _offset, _order }: PaginationListDto,
         @PaginationQueryFilterInBoolean('isActive', CATEGORY_DEFAULT_IS_ACTIVE)
         isActive: Record<string, any>
-    ): Promise<IResponsePaging<EventShortResponseDto>> {
+    ): Promise<IResponsePaging<ScheduleShortResponseDto>> {
         const find: Record<string, any> = {
             ..._search,
             ...isActive,
             owner: user._id,
         };
 
-        const events: EventDoc[] = await this.eventService.findAll(find, {
+        const events: ScheduleDoc[] = await this.scheduleService.findAll(find, {
             paging: {
                 limit: _limit,
                 offset: _offset,
@@ -81,14 +83,14 @@ export class EventSharedController {
             order: _order,
         });
 
-        const total: number = await this.eventService.getTotal(find);
+        const total: number = await this.scheduleService.getTotal(find);
         const totalPage: number = this.paginationService.totalPage(
             total,
             _limit
         );
 
-        const mapped: EventShortResponseDto[] =
-            await this.eventService.mapShort(events);
+        const mapped: ScheduleShortResponseDto[] =
+            await this.scheduleService.mapShort(events);
 
         return {
             _pagination: { total, totalPage },
@@ -114,43 +116,11 @@ export class EventSharedController {
         @Param('userId', RequestRequiredPipe, UserParsePipe)
         user: UserDoc,
         @Param('event', RequestRequiredPipe, EventParsePipe)
-        event: EventDoc
-    ): Promise<IResponse<EventShortResponseDto>> {
-        const mapped: EventShortResponseDto =
-            await this.eventService.mapGetShort(event);
+        event: ScheduleDoc
+    ): Promise<IResponse<ScheduleShortResponseDto>> {
+        const mapped: ScheduleShortResponseDto =
+            await this.scheduleService.mapGetShort(event);
         return { data: mapped };
     }
-
-    // endregion
-
-    // region Get Event Available Slots
-    @ResponsePaging('event.list')
-    @PolicyAbilityProtected({
-        subject: ENUM_POLICY_SUBJECT.SLOT,
-        action: [ENUM_POLICY_ACTION.READ],
-    })
-    @PolicyRoleProtected(
-        ENUM_POLICY_ROLE_TYPE.EXPERT,
-        ENUM_POLICY_ROLE_TYPE.USER
-    )
-    @AuthJwtAccessProtected()
-    @ApiKeyProtected()
-    @Get('/:eventId/slots')
-    async getSlots(
-        @Param('eventId') eventId: string,
-        @Query('startDate') startDate: string,
-        @Query('endDate') endDate: string
-    ) {
-        console.log('*****************************');
-        console.log('Start Date: ' + startDate);
-        console.log('End Date: ' + startDate);
-        console.log();
-        const slots = await this.eventService.getAvailableSlots(eventId, {
-            start: new Date(startDate),
-            end: new Date(endDate),
-        });
-        return { slots };
-    }
-
     // endregion
 }

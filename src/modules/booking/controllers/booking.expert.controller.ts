@@ -5,6 +5,7 @@ import {
     InternalServerErrorException,
     Post,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { ClientSession, Connection } from 'mongoose';
 import { ENUM_APP_STATUS_CODE_ERROR } from 'src/app/enums/app.status-code.enum';
 import { DatabaseConnection } from 'src/common/database/decorators/database.decorator';
@@ -33,11 +34,12 @@ import { ENUM_USER_STATUS_CODE_ERROR } from 'src/modules/user/enums/user.status-
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
 
+@ApiTags('modules.admin.category')
 @Controller({
     version: '1',
     path: '/events',
 })
-export class EventExpertController {
+export class BookingExpertController {
     constructor(
         @DatabaseConnection() private readonly databaseConnection: Connection,
         private readonly eventService: EventService,

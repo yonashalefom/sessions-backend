@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import {
     PaginationQuery,
     PaginationQueryFilterInBoolean,
@@ -34,11 +35,12 @@ import {
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
 
+@ApiTags('modules.shared.event')
 @Controller({
     version: '1',
     path: '/events',
 })
-export class EventSharedController {
+export class BookingSharedController {
     constructor(
         private readonly eventService: EventService,
         private readonly paginationService: PaginationService
@@ -120,37 +122,5 @@ export class EventSharedController {
             await this.eventService.mapGetShort(event);
         return { data: mapped };
     }
-
-    // endregion
-
-    // region Get Event Available Slots
-    @ResponsePaging('event.list')
-    @PolicyAbilityProtected({
-        subject: ENUM_POLICY_SUBJECT.SLOT,
-        action: [ENUM_POLICY_ACTION.READ],
-    })
-    @PolicyRoleProtected(
-        ENUM_POLICY_ROLE_TYPE.EXPERT,
-        ENUM_POLICY_ROLE_TYPE.USER
-    )
-    @AuthJwtAccessProtected()
-    @ApiKeyProtected()
-    @Get('/:eventId/slots')
-    async getSlots(
-        @Param('eventId') eventId: string,
-        @Query('startDate') startDate: string,
-        @Query('endDate') endDate: string
-    ) {
-        console.log('*****************************');
-        console.log('Start Date: ' + startDate);
-        console.log('End Date: ' + startDate);
-        console.log();
-        const slots = await this.eventService.getAvailableSlots(eventId, {
-            start: new Date(startDate),
-            end: new Date(endDate),
-        });
-        return { slots };
-    }
-
     // endregion
 }

@@ -29,6 +29,8 @@ export enum ENUM_POLICY_SUBJECT {
     USER = 'USER',
     EXPERT = 'EXPERT',
     EVENT = 'EVENT',
+    SCHEDULE = 'SCHEDULE',
+    SLOT = 'SLOT',
 }
 
 export enum ENUM_POLICY_ROLE_TYPE {

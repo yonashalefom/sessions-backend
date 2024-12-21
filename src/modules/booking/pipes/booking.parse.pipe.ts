@@ -4,7 +4,7 @@ import { EventDoc } from 'src/modules/events/repository/entities/event.entity';
 import { EventService } from 'src/modules/events/services/event.service';
 
 @Injectable()
-export class EventParsePipe implements PipeTransform {
+export class BookingParsePipe implements PipeTransform {
     constructor(private readonly eventService: EventService) {}
 
     async transform(value: any): Promise<EventDoc> {
@@ -13,7 +13,7 @@ export class EventParsePipe implements PipeTransform {
         if (!event) {
             throw new NotFoundException({
                 statusCode: ENUM_CATEGORY_STATUS_CODE_ERROR.NOT_FOUND,
-                message: 'event.error.notFound',
+                message: 'category.error.notFound',
             });
         }
 

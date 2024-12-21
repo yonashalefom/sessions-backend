@@ -4,11 +4,17 @@ import { CategoryModule } from 'src/modules/category/category.module';
 import { EventExpertController } from 'src/modules/events/controllers/event.expert.controller';
 import { EventModule } from 'src/modules/events/event.module';
 import { ExpertModule } from 'src/modules/expert/expert.module';
+import { ScheduleExpertController } from 'src/modules/schedules/controllers/schedule.expert.controller';
+import { ScheduleModule } from 'src/modules/schedules/schedule.module';
 import { UserExpertController } from 'src/modules/user/controllers/user.expert.controller';
 import { UserModule } from 'src/modules/user/user.module';
 
 @Module({
-    controllers: [UserExpertController, EventExpertController],
+    controllers: [
+        UserExpertController,
+        EventExpertController,
+        ScheduleExpertController,
+    ],
     providers: [],
     exports: [],
     imports: [
@@ -17,6 +23,7 @@ import { UserModule } from 'src/modules/user/user.module';
         AuthModule,
         CategoryModule,
         EventModule,
+        ScheduleModule,
     ],
 })
 export class RoutesExpertModule {}

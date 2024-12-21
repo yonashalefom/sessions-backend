@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
+import moment from 'moment-timezone';
 import { Document } from 'mongoose';
-import { DatabaseQueryAnd } from 'src/common/database/decorators/database.decorator';
+import {
+    DatabaseQueryAnd,
+    DatabaseQueryContain,
+} from 'src/common/database/decorators/database.decorator';
 import {
     IDatabaseCreateOptions,
     IDatabaseDeleteManyOptions,
+    IDatabaseExistOptions,
     IDatabaseFindAllOptions,
     IDatabaseGetTotalOptions,
     IDatabaseOptions,
@@ -22,12 +27,15 @@ import {
     EventEntity,
 } from 'src/modules/events/repository/entities/event.entity';
 import { EventRepository } from 'src/modules/events/repository/repositories/event.repository';
+import { splitTimeIntoIntervals } from 'src/modules/schedules/helpers/schedule.helper';
+import { ScheduleService } from 'src/modules/schedules/services/schedule.service';
 
 @Injectable()
 export class EventService implements IEventService {
     constructor(
         private readonly eventRepository: EventRepository,
-        private readonly helperURLService: HelperURLService
+        private readonly helperURLService: HelperURLService,
+        private readonly scheduleService: ScheduleService
     ) {}
 
     async findAll(
@@ -106,6 +114,140 @@ export class EventService implements IEventService {
         return this.eventRepository.create<EventEntity>(create, options);
     }
 
+    async exists(
+        email: string,
+        options?: IDatabaseExistOptions
+    ): Promise<boolean> {
+        return this.eventRepository.exists(
+            DatabaseQueryContain('email', email, { fullWord: true }),
+            { ...options, withDeleted: true }
+        );
+    }
+
+    async filterValidExpertise(ids: string[]): Promise<string[]> {
+        // Fetch only the IDs that exist in the database
+        const existingExpertise = await this.findAll({ _id: { $in: ids } });
+
+        // Extract the valid IDs
+        const existingIds = existingExpertise.map(expertise =>
+            expertise._id.toString()
+        );
+
+        // Return only the IDs that exist
+        return ids.filter(id => existingIds.includes(id));
+    }
+
+    async getAvailableSlots(
+        eventId: string,
+        dateRange: { start: Date; end: Date }
+    ) {
+        // Fetch Event and Expert's Schedule
+        const event = await this.eventRepository.findOneById(eventId);
+        console.log('Event Is:');
+        console.log(JSON.stringify(event, null, 2));
+        const schedules = await this.scheduleService.findAll({
+            userId: event.owner,
+            isActive: true,
+        });
+        console.log();
+        console.log('Schedules Are:');
+        console.log(JSON.stringify(schedules, null, 2));
+        console.log();
+
+        const availableSlots = [];
+
+        for (const schedule of schedules) {
+            console.log('******************************');
+            console.log('Current Schedule');
+            console.log('******************************');
+            console.log(JSON.stringify(schedule, null, 2));
+            for (const availability of schedule.availability) {
+                // Generate intervals for each day in availability
+                const days = availability.days;
+                console.log('Current Schedule Availability Days: ');
+                console.log(JSON.stringify(days, null, 2));
+                // Iterate through the date range
+                const startDate = moment(dateRange.start);
+                const endDate = moment(dateRange.end);
+                console.log('--------------------------------');
+                console.log(startDate);
+                console.log(endDate);
+                console.log('--------------------------------');
+
+                while (startDate.isBefore(endDate)) {
+                    console.log(
+                        'Date Range ' +
+                            startDate.format() +
+                            ' is Before: ' +
+                            endDate.format()
+                    );
+
+                    if (days.includes(startDate.isoWeekday())) {
+                        // Generate time slots for the day
+                        const slots = splitTimeIntoIntervals(
+                            startDate.format('YYYY-MM-DD'),
+                            endDate.format('YYYY-MM-DD'),
+                            availability.startTime,
+                            availability.endTime,
+                            event.duration,
+                            schedule.timeZone
+                        );
+
+                        console.log('--------------------------------');
+                        console.log(JSON.stringify(slots, null, 2));
+                        console.log('--------------------------------');
+
+                        for (const slot of slots) {
+                            const adjustedSlotStart = moment(slot).add(
+                                event.bookingOffsetMinutes,
+                                'minutes'
+                            );
+
+                            console.log(
+                                'adjustedSlotStart: ' +
+                                    adjustedSlotStart.format()
+                            );
+
+                            // Exclude conflicted slots
+                            const isConflicted =
+                                await this.eventRepository.exists({
+                                    owner: event.owner,
+                                    eventStartDate: {
+                                        $lte: adjustedSlotStart.toDate(),
+                                    },
+                                    $expr: {
+                                        $gt: [
+                                            {
+                                                $add: [
+                                                    '$eventStartDate',
+                                                    {
+                                                        $multiply: [
+                                                            '$duration',
+                                                            60000,
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            adjustedSlotStart.toDate(),
+                                        ],
+                                    },
+                                });
+
+                            if (!isConflicted) {
+                                availableSlots.push(
+                                    adjustedSlotStart.toISOString()
+                                );
+                            }
+                        }
+                    }
+                    startDate.add(1, 'day');
+                }
+            }
+        }
+
+        return availableSlots;
+    }
+
     // async createMany(
     //     data: EventCreateRequestDto[],
     //     options?: IDatabaseCreateManyOptions
@@ -165,18 +307,5 @@ export class EventService implements IEventService {
                 e instanceof Document ? e.toObject() : e
             )
         );
-    }
-
-    async filterValidExpertise(ids: string[]): Promise<string[]> {
-        // Fetch only the IDs that exist in the database
-        const existingExpertise = await this.findAll({ _id: { $in: ids } });
-
-        // Extract the valid IDs
-        const existingIds = existingExpertise.map(expertise =>
-            expertise._id.toString()
-        );
-
-        // Return only the IDs that exist
-        return ids.filter(id => existingIds.includes(id));
     }
 }

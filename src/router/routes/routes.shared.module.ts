@@ -9,6 +9,10 @@ import { CountryModule } from 'src/modules/country/country.module';
 import { EmailModule } from 'src/modules/email/email.module';
 import { EventSharedController } from 'src/modules/events/controllers/event.shared.controller';
 import { EventModule } from 'src/modules/events/event.module';
+import { ScheduleSharedController } from 'src/modules/schedules/controllers/schedule.shared.controller';
+import { ScheduleModule } from 'src/modules/schedules/schedule.module';
+import { SlotSharedController } from 'src/modules/slot/controllers/slot.shared.controller';
+import { SlotModule } from 'src/modules/slot/slot.module';
 import { UserSharedController } from 'src/modules/user/controllers/user.shared.controller';
 import { UserModule } from 'src/modules/user/user.module';
 import { WORKER_CONNECTION_NAME } from 'src/worker/constants/worker.constant';
@@ -20,6 +24,8 @@ import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
         AuthSharedController,
         CategorySharedController,
         EventSharedController,
+        ScheduleSharedController,
+        SlotSharedController,
     ],
     providers: [],
     exports: [],
@@ -27,6 +33,8 @@ import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
         UserModule,
         CategoryModule,
         EventModule,
+        ScheduleModule,
+        SlotModule,
         EmailModule,
         AuthModule,
         AwsModule,
