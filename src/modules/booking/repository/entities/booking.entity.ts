@@ -5,11 +5,15 @@ import {
     DatabaseSchema,
 } from 'src/common/database/decorators/database.decorator';
 import { IDatabaseDocument } from 'src/common/database/interfaces/database.interface';
+import { BookingReferenceEntity } from 'src/modules/booking/repository/entities/booking.reference.entity';
+import { EventEntity } from 'src/modules/events/repository/entities/event.entity';
 import { UserEntity } from 'src/modules/user/repository/entities/user.entity';
 
-export const EventTableName = 'Events';
+type BookingStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
 
-@DatabaseEntity({ collection: EventTableName })
+export const BookingTableName = 'Bookings';
+
+@DatabaseEntity({ collection: BookingTableName })
 export class BookingEntity extends DatabaseEntityAbstract {
     @DatabaseProp({
         required: true,
@@ -17,15 +21,23 @@ export class BookingEntity extends DatabaseEntityAbstract {
         trim: true,
         index: true,
     })
-    eventId: string;
+    expertId: string;
 
     @DatabaseProp({
         required: true,
+        ref: UserEntity.name,
         trim: true,
-        maxlength: 100,
         index: true,
     })
-    title: string;
+    userId: string;
+
+    @DatabaseProp({
+        required: true,
+        ref: EventEntity.name,
+        trim: true,
+        index: true,
+    })
+    eventId: string;
 
     @DatabaseProp({
         required: false,
@@ -34,55 +46,69 @@ export class BookingEntity extends DatabaseEntityAbstract {
         maxlength: 500,
         minlength: 15,
     })
-    description: string;
+    description?: string;
 
     @DatabaseProp({
         required: true,
+        index: 'asc',
+        type: Date,
+    })
+    startTime: Date;
+
+    @DatabaseProp({
+        required: true,
+        index: 'asc',
+        type: Date,
+    })
+    endTime: Date;
+
+    @DatabaseProp({
+        required: false,
         unique: true,
         trim: true,
-        index: true,
-        maxlength: 100,
+        enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED'],
+        default: 'ACCEPTED',
     })
-    slug: string;
+    status?: BookingStatus;
 
     @DatabaseProp({
         required: false,
-        type: Date,
-        default: new Date(),
-    })
-    eventStartDate?: Date;
-
-    @DatabaseProp({
-        required: false,
-        type: Date,
-    })
-    eventEndDate?: Date;
-
-    @DatabaseProp({
-        required: false,
-        type: Number,
-        default: 0,
-    })
-    bookingOffsetMinutes?: number;
-
-    @DatabaseProp({
+        unique: true,
         trim: true,
-        maxlength: 3,
-        default: 'USD',
+        maxlength: 500,
+        minlength: 3,
     })
-    currency?: string;
+    cancellationReason?: string;
 
     @DatabaseProp({
-        required: true,
-        type: Number,
+        required: false,
+        unique: true,
+        trim: true,
+        maxlength: 500,
+        minlength: 3,
     })
-    price: number;
+    rejectionReason?: string;
 
     @DatabaseProp({
-        required: true,
+        required: false,
         type: Number,
     })
-    duration: number;
+    rating?: number;
+
+    @DatabaseProp({
+        required: false,
+        unique: true,
+        trim: true,
+        maxlength: 500,
+        minlength: 1,
+    })
+    ratingFeedback?: string;
+
+    @DatabaseProp({
+        required: false,
+        schema: BookingReferenceEntity,
+    })
+    bookingRef?: BookingReferenceEntity;
 
     @DatabaseProp({
         required: true,
@@ -93,7 +119,7 @@ export class BookingEntity extends DatabaseEntityAbstract {
     isActive: boolean;
 }
 
-export const EventSchema = DatabaseSchema(BookingEntity);
-export type EventDoc = IDatabaseDocument<BookingEntity>;
+export const BookingSchema = DatabaseSchema(BookingEntity);
+export type BookingDoc = IDatabaseDocument<BookingEntity>;
 
-EventSchema.index({ owner: 1, title: 1 }, { unique: true });
+// BookingSchema.index({ owner: 1, title: 1 }, { unique: true });

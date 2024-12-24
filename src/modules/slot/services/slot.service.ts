@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import moment from 'moment-timezone';
 import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
+import { BookingDoc } from 'src/modules/booking/repository/entities/booking.entity';
+import { BookingService } from 'src/modules/booking/services/booking.service';
 import { EventDoc } from 'src/modules/events/repository/entities/event.entity';
 import { EventService } from 'src/modules/events/services/event.service';
 import { ScheduleAvailabilityEntity } from 'src/modules/schedules/repository/entities/schedule.availability.entity';
@@ -15,6 +17,7 @@ export class SlotService implements ISlotService {
     constructor(
         private readonly scheduleService: ScheduleService,
         private readonly eventService: EventService,
+        private readonly bookingService: BookingService,
         private readonly helperDateService: HelperDateService,
         private readonly helperURLService: HelperURLService
     ) {}
@@ -33,7 +36,7 @@ export class SlotService implements ISlotService {
 
         for (const expertSchedule of expertSchedules) {
             for (const expertAvailability of expertSchedule.availability) {
-                const dailySlots = this.generateEventSlots(
+                const dailySlots = await this.generateEventSlots(
                     dateRange,
                     expertAvailability,
                     expertSchedule.timeZone,
@@ -44,22 +47,89 @@ export class SlotService implements ISlotService {
         }
 
         console.log(JSON.stringify(availableSlots, null, 2));
+        // Fetch all active bookings for the expert
+        const bookings = await this.bookingService.findAll({
+            expertId: expertEvent.owner,
+            isActive: true,
+        });
+
+        // Filter slots to find available ones
+        let availableSlotsFiltered = availableSlots;
+        if (bookings.length > 0) {
+            availableSlotsFiltered = availableSlots.filter(slot => {
+                const slotStart = moment(slot);
+                const slotEnd = moment(slot).add(
+                    expertEvent.duration,
+                    'minutes'
+                );
+
+                return this.isSlotAvailable(slotStart, slotEnd, bookings);
+            });
+        }
 
         return this.groupSlotsByDate(
-            availableSlots,
+            availableSlotsFiltered,
             dateRange.userTimezone,
             expertEvent.duration
         );
     }
+
     // endregion
 
+    // region Validate Slot is Valid for the Specified Slot
+    isValidSlot(
+        requestedStartTime: string,
+        requestedEndTime: string,
+        availableSlots: Record<string, SlotDto[]>
+    ): boolean {
+        const requestedStart = moment(requestedStartTime);
+        const requestedEnd = moment(requestedEndTime);
+
+        // Get the date key from the requested start time
+        const dateKey = requestedStart.format('YYYY-MM-DD');
+
+        // Check if slots exist for the requested date
+        if (!availableSlots[dateKey]) {
+            return false;
+        }
+
+        // Validate the requested time against the available slots
+        return availableSlots[dateKey].some(slot => {
+            const slotStart = moment(slot.startTime);
+            const slotEnd = moment(slot.endTime);
+
+            return (
+                requestedStart.isSameOrAfter(slotStart) &&
+                requestedEnd.isSameOrBefore(slotEnd)
+            );
+        });
+    }
+
+    // endregion
+
+    private isSlotAvailable(
+        slotStart: moment.Moment,
+        slotEnd: moment.Moment,
+        bookings: BookingDoc[]
+    ): boolean {
+        return !bookings.some(booking => {
+            const bookingStart = moment(booking.startTime);
+            const bookingEnd = moment(booking.endTime);
+
+            // Check if the slot overlaps with the booking
+            return (
+                slotStart.isBefore(bookingEnd) && slotEnd.isAfter(bookingStart)
+            );
+        });
+    }
+
     // region Generate Time Slots for an Event
-    private generateEventSlots(
+    private async generateEventSlots(
         dateRange: DateRangeWithTimezone,
         expertAvailability: ScheduleAvailabilityEntity,
         scheduleTimeZone: string,
         expertEvent: EventDoc
-    ): string[] {
+    ): Promise<string[]> {
         const { days, startTime, endTime } = expertAvailability;
 
         const availableSlots = [];
@@ -70,6 +140,8 @@ export class SlotService implements ISlotService {
         const endDateByUserTimezone = moment(dateRange.end)
             .tz(dateRange.userTimezone)
             .endOf('day');
+
+        const currentTime = moment().tz(scheduleTimeZone);
 
         while (startDateByUserTimezone.isBefore(endDateByUserTimezone)) {
             if (days.includes(startDateByUserTimezone.isoWeekday())) {
@@ -88,7 +160,16 @@ export class SlotService implements ISlotService {
                     );
 
                     // if (!this.isSlotConflicted(adjustedSlotStart, expertEvent)) {
-                    availableSlots.push(adjustedSlotStart.toISOString());
+                    if (
+                        adjustedSlotStart.isAfter(currentTime)
+                        // &&
+                        // !(await this.isSlotConflicted(
+                        //     adjustedSlotStart,
+                        //     expertEvent
+                        // ))
+                    ) {
+                        availableSlots.push(adjustedSlotStart.toISOString());
+                    }
                     // }
                 }
             }
@@ -98,6 +179,7 @@ export class SlotService implements ISlotService {
 
         return availableSlots;
     }
+
     // endregion
 
     // region Split Expert Availability Time Into Intervals
@@ -126,28 +208,26 @@ export class SlotService implements ISlotService {
 
         return intervals;
     }
+
     // endregion
 
-    // private async isSlotConflicted(
-    //     adjustedSlotStart: moment.Moment,
-    //     event: any
-    // ): Promise<boolean> {
-    //     return await this.eventService.exists({
-    //         owner: event.owner,
-    //         eventStartDate: { $lte: adjustedSlotStart.toDate() },
-    //         $expr: {
-    //             $gt: [
-    //                 {
-    //                     $add: [
-    //                         '$eventStartDate',
-    //                         { $multiply: ['$duration', 60000] },
-    //                     ],
-    //                 },
-    //                 adjustedSlotStart.toDate(),
-    //             ],
-    //         },
-    //     });
-    // }
+    // region Check For Slot Conflict
+    private async isSlotConflicted(
+        adjustedSlotStart: moment.Moment,
+        event: EventDoc
+    ): Promise<boolean> {
+        // Fetch active bookings for the expert
+        const activeBookings = await this.bookingService.findAll({
+            expertId: event.owner,
+            isActive: true,
+            startTime: { $lte: adjustedSlotStart.toDate() },
+            endTime: { $gte: adjustedSlotStart.toDate() },
+        });
+
+        // Check if the slot overlaps with any active booking
+        console.log('Conflicted Slots: ' + activeBookings.length);
+        return activeBookings.length > 0;
+    }
 
     // region Group Slots By Date
     private groupSlotsByDate(
@@ -176,5 +256,6 @@ export class SlotService implements ISlotService {
 
         return groupedSlots;
     }
+
     // endregion
 }

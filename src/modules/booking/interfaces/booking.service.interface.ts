@@ -5,34 +5,34 @@ import {
     IDatabaseOptions,
 } from 'src/common/database/interfaces/database.interface';
 import {
-    EventGetResponseDto,
-    EventListResponseDto,
-    EventShortResponseDto,
-} from 'src/modules/events/dtos/response/event.get.response.dto';
+    BookingGetResponseDto,
+    BookingListResponseDto,
+    BookingShortResponseDto,
+} from 'src/modules/booking/dtos/response/booking.get.response.dto';
 import {
-    EventDoc,
-    EventEntity,
-} from 'src/modules/events/repository/entities/event.entity';
+    BookingDoc,
+    BookingEntity,
+} from 'src/modules/booking/repository/entities/booking.entity';
 
-export interface IEventService {
+export interface IBookingService {
     findAll(
         find?: Record<string, any>,
         options?: IDatabaseFindAllOptions
-    ): Promise<EventDoc[]>;
+    ): Promise<BookingDoc[]>;
     findOne(
         find: Record<string, any>,
         options?: IDatabaseOptions
-    ): Promise<EventDoc>;
-    checkEventAlreadyExists(
+    ): Promise<BookingDoc>;
+    checkBookingAlreadyExists(
         name: string,
         owner: string,
         options?: IDatabaseOptions
-    ): Promise<EventDoc>;
-    findOneById(_id: string, options?: IDatabaseOptions): Promise<EventDoc>;
+    ): Promise<BookingDoc>;
+    findOneById(_id: string, options?: IDatabaseOptions): Promise<BookingDoc>;
     findOneActiveById(
         _id: string,
         options?: IDatabaseOptions
-    ): Promise<EventDoc>;
+    ): Promise<BookingDoc>;
     getTotal(
         find?: Record<string, any>,
         options?: IDatabaseGetTotalOptions
@@ -42,14 +42,16 @@ export interface IEventService {
         options?: IDatabaseDeleteManyOptions
     ): Promise<boolean>;
     // createMany(
-    //     data: EventCreateRequestDto[],
+    //     data: BookingCreateRequestDto[],
     //     options?: IDatabaseCreateManyOptions
     // ): Promise<boolean>;
     mapList(
-        countries: EventDoc[] | EventEntity[]
-    ): Promise<EventListResponseDto[]>;
-    mapGet(category: EventDoc | EventEntity): Promise<EventGetResponseDto>;
+        countries: BookingDoc[] | BookingEntity[]
+    ): Promise<BookingListResponseDto[]>;
+    mapGet(
+        category: BookingDoc | BookingEntity
+    ): Promise<BookingGetResponseDto>;
     mapShort(
-        categories: EventDoc[] | EventEntity[]
-    ): Promise<EventShortResponseDto[]>;
+        categories: BookingDoc[] | BookingEntity[]
+    ): Promise<BookingShortResponseDto[]>;
 }

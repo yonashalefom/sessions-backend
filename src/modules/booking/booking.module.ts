@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
-import { EventRepositoryModule } from 'src/modules/events/repository/event.repository.module';
-import { EventService } from 'src/modules/events/services/event.service';
+import { BookingRepositoryModule } from 'src/modules/booking/repository/booking.repository.module';
+import { BookingService } from 'src/modules/booking/services/booking.service';
+import { EventModule } from 'src/modules/events/event.module';
+import { ScheduleModule } from 'src/modules/schedules/schedule.module';
 
 @Module({
-    imports: [EventRepositoryModule],
-    exports: [EventService],
-    providers: [EventService],
+    imports: [BookingRepositoryModule, EventModule, ScheduleModule],
+    exports: [BookingService],
+    providers: [BookingService],
     controllers: [],
 })
 export class BookingModule {}

@@ -17,7 +17,7 @@ export class BookingGetResponseDto extends DatabaseDto {
     isActive: boolean;
 }
 
-export class EventShortResponseDto extends OmitType(BookingGetResponseDto, [
+export class BookingShortResponseDto extends OmitType(BookingGetResponseDto, [
     'createdAt',
     'updatedAt',
     'deletedAt',
@@ -41,4 +41,4 @@ export class EventShortResponseDto extends OmitType(BookingGetResponseDto, [
     __v: boolean;
 }
 
-export class EventListResponseDto extends BookingGetResponseDto {}
+export class BookingListResponseDto extends BookingGetResponseDto {}

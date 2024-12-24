@@ -5,6 +5,7 @@ import { PaginationService } from 'src/common/pagination/services/pagination.ser
 import { RequestRequiredPipe } from 'src/common/request/pipes/request.required.pipe';
 import { Response } from 'src/common/response/decorators/response.decorator';
 import { IResponse } from 'src/common/response/interfaces/response.interface';
+import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
 import {
     AuthJwtAccessProtected,
     AuthJwtPayload,
@@ -52,6 +53,7 @@ export class SlotSharedController {
         ENUM_POLICY_ROLE_TYPE.USER
     )
     @AuthJwtAccessProtected()
+    @ApiKeyProtected()
     @Get('/available')
     async getAvailableSlots(
         @Query('eventId', RequestRequiredPipe, EventParsePipe)

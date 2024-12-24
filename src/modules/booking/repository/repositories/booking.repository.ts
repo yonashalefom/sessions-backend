@@ -3,19 +3,19 @@ import { Model } from 'mongoose';
 import { DatabaseRepositoryAbstract } from 'src/common/database/abstracts/database.repository.abstract';
 import { DatabaseModel } from 'src/common/database/decorators/database.decorator';
 import {
-    EventDoc,
-    EventEntity,
-} from 'src/modules/events/repository/entities/event.entity';
+    BookingDoc,
+    BookingEntity,
+} from 'src/modules/booking/repository/entities/booking.entity';
 
 @Injectable()
 export class BookingRepository extends DatabaseRepositoryAbstract<
-    EventEntity,
-    EventDoc
+    BookingEntity,
+    BookingDoc
 > {
     constructor(
-        @DatabaseModel(EventEntity.name)
-        private readonly eventModel: Model<EventEntity>
+        @DatabaseModel(BookingEntity.name)
+        private readonly bookingModel: Model<BookingEntity>
     ) {
-        super(eventModel);
+        super(bookingModel);
     }
 }

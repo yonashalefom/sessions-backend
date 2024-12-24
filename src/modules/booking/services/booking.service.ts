@@ -10,70 +10,70 @@ import {
     IDatabaseOptions,
 } from 'src/common/database/interfaces/database.interface';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
-import { EventCreateRequestDto } from 'src/modules/events/dtos/request/event.create.request.dto';
+import { BookingCreateRequestDto } from 'src/modules/booking/dtos/request/booking.create.request.dto';
 import {
-    EventGetResponseDto,
-    EventShortResponseDto,
-    EventListResponseDto,
-} from 'src/modules/events/dtos/response/event.get.response.dto';
-import { IEventService } from 'src/modules/events/interfaces/event.service.interface';
+    BookingGetResponseDto,
+    BookingListResponseDto,
+    BookingShortResponseDto,
+} from 'src/modules/booking/dtos/response/booking.get.response.dto';
+import { IBookingService } from 'src/modules/booking/interfaces/booking.service.interface';
 import {
-    EventDoc,
-    EventEntity,
-} from 'src/modules/events/repository/entities/event.entity';
-import { EventRepository } from 'src/modules/events/repository/repositories/event.repository';
+    BookingDoc,
+    BookingEntity,
+} from 'src/modules/booking/repository/entities/booking.entity';
+import { BookingRepository } from 'src/modules/booking/repository/repositories/booking.repository';
 
 @Injectable()
-export class BookingService implements IEventService {
+export class BookingService implements IBookingService {
     constructor(
-        private readonly eventRepository: EventRepository,
+        private readonly bookingRepository: BookingRepository,
         private readonly helperURLService: HelperURLService
     ) {}
 
     async findAll(
         find?: Record<string, any>,
         options?: IDatabaseFindAllOptions
-    ): Promise<EventDoc[]> {
-        return this.eventRepository.findAll(find, options);
+    ): Promise<BookingDoc[]> {
+        return this.bookingRepository.findAll(find, options);
     }
 
     async findOne(
         find: Record<string, any>,
         options?: IDatabaseOptions
-    ): Promise<EventDoc> {
-        return this.eventRepository.findOne(find, options);
+    ): Promise<BookingDoc> {
+        return this.bookingRepository.findOne(find, options);
     }
 
-    async checkEventAlreadyExists(
+    async checkBookingAlreadyExists(
         event: string,
         owner: string,
         options?: IDatabaseOptions
-    ): Promise<EventDoc> {
+    ): Promise<BookingDoc> {
         console.log('Event is: ' + event);
         const find: any = DatabaseQueryAnd([{ title: event }, { owner }]);
         console.log('Find is: ' + JSON.stringify(find, null, 2));
-        return this.eventRepository.findOne(find, options);
+        return this.bookingRepository.findOne(find, options);
     }
 
     async findOneById(
         _id: string,
         options?: IDatabaseOptions
-    ): Promise<EventDoc> {
-        return this.eventRepository.findOneById(_id, options);
+    ): Promise<BookingDoc> {
+        return this.bookingRepository.findOneById(_id, options);
     }
 
     async findOneActiveById(
         _id: string,
         options?: IDatabaseOptions
-    ): Promise<EventDoc> {
-        return this.eventRepository.findOne({ _id, isActive: true }, options);
+    ): Promise<BookingDoc> {
+        return this.bookingRepository.findOne({ _id, isActive: true }, options);
     }
 
     async getTotal(
         find?: Record<string, any>,
         options?: IDatabaseGetTotalOptions
     ): Promise<number> {
-        return this.eventRepository.getTotal(find, options);
+        return this.bookingRepository.getTotal(find, options);
     }
 
     async deleteMany(
@@ -81,7 +81,7 @@ export class BookingService implements IEventService {
         options?: IDatabaseDeleteManyOptions
     ): Promise<boolean> {
         try {
-            await this.eventRepository.deleteMany(find, options);
+            await this.bookingRepository.deleteMany(find, options);
 
             return true;
         } catch (error: unknown) {
@@ -90,20 +90,40 @@ export class BookingService implements IEventService {
     }
 
     async create(
-        { title, description, price, duration }: EventCreateRequestDto,
+        {
+            startTime,
+            expertId,
+            endTime,
+            eventId,
+            description,
+        }: Partial<BookingCreateRequestDto>,
         userId: string,
         options?: IDatabaseCreateOptions
-    ): Promise<EventDoc> {
-        const create: EventEntity = new EventEntity();
-        create.owner = userId;
-        create.title = title;
+    ): Promise<BookingDoc> {
+        const create: BookingEntity = new BookingEntity();
+        create.eventId = eventId;
+        create.userId = userId;
+        create.expertId = expertId;
         create.description = description;
-        create.slug = this.helperURLService.slugify(title);
-        create.price = price;
-        create.duration = duration;
+        create.startTime = startTime;
+        create.endTime = endTime;
+        // create.slug = this.helperURLService.slugify(title);
+        // create.price = price;
+        // create.duration = duration;
         create.isActive = true;
 
-        return this.eventRepository.create<EventEntity>(create, options);
+        console.log('Booking Data: ');
+        console.log(JSON.stringify(create, null, 2));
+        try {
+            const as = await this.bookingRepository.create<BookingEntity>(
+                create,
+                options
+            );
+            console.log('KL: ' + JSON.stringify(as, null, 2));
+            return as;
+        } catch (err) {
+            console.log(JSON.stringify(err.message, null, 2));
+        }
     }
 
     // async createMany(
@@ -121,7 +141,7 @@ export class BookingService implements IEventService {
     //             }
     //         ) as EventEntity[];
     //
-    //         await this.eventRepository.createMany(entities, options);
+    //         await this.bookingRepository.createMany(entities, options);
     //
     //         return true;
     //     } catch (error: unknown) {
@@ -130,38 +150,40 @@ export class BookingService implements IEventService {
     // }
 
     async mapList(
-        categories: EventDoc[] | EventEntity[]
-    ): Promise<EventListResponseDto[]> {
+        categories: BookingDoc[] | BookingEntity[]
+    ): Promise<BookingListResponseDto[]> {
         return plainToInstance(
-            EventListResponseDto,
-            categories.map((e: EventDoc | EventEntity) =>
+            BookingListResponseDto,
+            categories.map((e: BookingDoc | BookingEntity) =>
                 e instanceof Document ? e.toObject() : e
             )
         );
     }
 
-    async mapGet(event: EventDoc | EventEntity): Promise<EventGetResponseDto> {
+    async mapGet(
+        event: BookingDoc | BookingEntity
+    ): Promise<BookingGetResponseDto> {
         return plainToInstance(
-            EventGetResponseDto,
+            BookingGetResponseDto,
             event instanceof Document ? event.toObject() : event
         );
     }
 
     async mapGetShort(
-        event: EventDoc | EventEntity
-    ): Promise<EventShortResponseDto> {
+        event: BookingDoc | BookingEntity
+    ): Promise<BookingShortResponseDto> {
         return plainToInstance(
-            EventShortResponseDto,
+            BookingShortResponseDto,
             event instanceof Document ? event.toObject() : event
         );
     }
 
     async mapShort(
-        countries: EventDoc[] | EventEntity[]
-    ): Promise<EventShortResponseDto[]> {
+        countries: BookingDoc[] | BookingEntity[]
+    ): Promise<BookingShortResponseDto[]> {
         return plainToInstance(
-            EventShortResponseDto,
-            countries.map((e: EventDoc | EventEntity) =>
+            BookingShortResponseDto,
+            countries.map((e: BookingDoc | BookingEntity) =>
                 e instanceof Document ? e.toObject() : e
             )
         );
