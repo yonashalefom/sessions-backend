@@ -1,5 +1,12 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    NotFoundException,
+    Param,
+    Query,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import moment from 'moment-timezone';
 import {
     PaginationQuery,
     PaginationQueryFilterInBoolean,
@@ -74,13 +81,21 @@ export class BookingExpertController {
         })
         { _search, _limit, _offset, _order }: PaginationListDto,
         @PaginationQueryFilterInBoolean('isActive', BOOKING_DEFAULT_IS_ACTIVE)
-        isActive: Record<string, any>
+        isActive: Record<string, any>,
+        @Query('active') active: string // Active filter query parameter
     ): Promise<IResponsePaging<BookingShortResponseDto>> {
         const find: Record<string, any> = {
             ..._search,
             ...isActive,
             expertId: user._id,
         };
+
+        // Add active filter if the query parameter is provided
+        if (active === 'true') {
+            find.startTime = {
+                $gte: moment().tz(user.country.timeZone).toDate(),
+            };
+        }
 
         const bookings: BookingDoc[] = await this.bookingService.findAll(find, {
             paging: {

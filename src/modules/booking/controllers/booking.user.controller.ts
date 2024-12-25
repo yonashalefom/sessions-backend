@@ -7,6 +7,7 @@ import {
     NotFoundException,
     Param,
     Post,
+    Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ClientSession, Connection } from 'mongoose';
@@ -238,13 +239,21 @@ export class BookingUserController {
         })
         { _search, _limit, _offset, _order }: PaginationListDto,
         @PaginationQueryFilterInBoolean('isActive', BOOKING_DEFAULT_IS_ACTIVE)
-        isActive: Record<string, any>
+        isActive: Record<string, any>,
+        @Query('active') active: string // Active filter query parameter
     ): Promise<IResponsePaging<BookingShortResponseDto>> {
         const find: Record<string, any> = {
             ..._search,
             ...isActive,
             userId: user._id,
         };
+
+        // Add active filter if the query parameter is provided
+        if (active === 'true') {
+            find.startTime = {
+                $gte: moment().tz(user.country.timeZone).toDate(),
+            };
+        }
 
         const bookings: BookingDoc[] = await this.bookingService.findAll(find, {
             paging: {
