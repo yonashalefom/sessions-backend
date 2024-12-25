@@ -5,11 +5,14 @@ import {
     DatabaseSchema,
 } from 'src/common/database/decorators/database.decorator';
 import { IDatabaseDocument } from 'src/common/database/interfaces/database.interface';
-import { BookingReferenceEntity } from 'src/modules/booking/repository/entities/booking.reference.entity';
+import {
+    BookingReferenceEntity,
+    BookingReferenceSchema,
+} from 'src/modules/booking/repository/entities/booking.reference.entity';
 import { EventEntity } from 'src/modules/events/repository/entities/event.entity';
 import { UserEntity } from 'src/modules/user/repository/entities/user.entity';
 
-type BookingStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
+export type BookingStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
 
 export const BookingTableName = 'Bookings';
 
@@ -69,7 +72,7 @@ export class BookingEntity extends DatabaseEntityAbstract {
         enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED'],
         default: 'ACCEPTED',
     })
-    status?: BookingStatus;
+    status: BookingStatus;
 
     @DatabaseProp({
         required: false,
@@ -106,7 +109,7 @@ export class BookingEntity extends DatabaseEntityAbstract {
 
     @DatabaseProp({
         required: false,
-        schema: BookingReferenceEntity,
+        schema: BookingReferenceSchema,
     })
     bookingRef?: BookingReferenceEntity;
 

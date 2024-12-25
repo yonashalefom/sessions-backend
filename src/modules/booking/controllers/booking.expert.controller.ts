@@ -25,6 +25,8 @@ import {
     BOOKING_DEFAULT_AVAILABLE_SEARCH,
     BOOKING_DEFAULT_IS_ACTIVE,
 } from 'src/modules/booking/constants/booking.list.constant';
+import { BookingShortResponseDto } from 'src/modules/booking/dtos/response/booking.get.response.dto';
+import { BookingDoc } from 'src/modules/booking/repository/entities/booking.entity';
 import { BookingService } from 'src/modules/booking/services/booking.service';
 import { EventShortResponseDto } from 'src/modules/events/dtos/response/event.get.response.dto';
 import { EventParsePipe } from 'src/modules/events/pipes/event.parse.pipe';
@@ -51,26 +53,23 @@ import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
     version: '1',
     path: '/booking',
 })
-export class BookingSharedController {
+export class BookingExpertController {
     constructor(
         private readonly bookingService: BookingService,
         private readonly eventService: EventService,
         private readonly paginationService: PaginationService
     ) {}
 
-    // region Get User Events
+    // region Get Expert Bookings
     @ResponsePaging('booking.list')
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.BOOKING,
         action: [ENUM_POLICY_ACTION.READ],
     })
-    @PolicyRoleProtected(
-        ENUM_POLICY_ROLE_TYPE.EXPERT,
-        ENUM_POLICY_ROLE_TYPE.USER
-    )
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.EXPERT)
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
-    @Get('/user/:userId')
+    @Get('/get/all')
     async list(
         @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserActiveParsePipe)
         user: IUserDoc,
@@ -80,19 +79,20 @@ export class BookingSharedController {
         { _search, _limit, _offset, _order }: PaginationListDto,
         @PaginationQueryFilterInBoolean('isActive', BOOKING_DEFAULT_IS_ACTIVE)
         isActive: Record<string, any>
-    ): Promise<IResponsePaging<EventShortResponseDto>> {
+    ): Promise<IResponsePaging<BookingShortResponseDto>> {
         const find: Record<string, any> = {
             ..._search,
             ...isActive,
             expertId: user._id,
         };
 
-        const events: EventDoc[] = await this.eventService.findAll(find, {
+        const bookings: BookingDoc[] = await this.bookingService.findAll(find, {
             paging: {
                 limit: _limit,
                 offset: _offset,
             },
             order: _order,
+            join: true,
         });
 
         const total: number = await this.eventService.getTotal(find);
@@ -101,8 +101,8 @@ export class BookingSharedController {
             _limit
         );
 
-        const mapped: EventShortResponseDto[] =
-            await this.eventService.mapShort(events);
+        const mapped: BookingShortResponseDto[] =
+            await this.bookingService.mapShort(bookings);
 
         return {
             _pagination: { total, totalPage },

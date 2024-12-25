@@ -170,21 +170,21 @@ export class BookingService implements IBookingService {
     }
 
     async mapGetShort(
-        event: BookingDoc | BookingEntity
+        booking: BookingDoc | BookingEntity
     ): Promise<BookingShortResponseDto> {
         return plainToInstance(
             BookingShortResponseDto,
-            event instanceof Document ? event.toObject() : event
+            booking instanceof Document ? booking.toObject() : booking
         );
     }
 
     async mapShort(
-        countries: BookingDoc[] | BookingEntity[]
+        bookings: BookingDoc[] | BookingEntity[]
     ): Promise<BookingShortResponseDto[]> {
         return plainToInstance(
             BookingShortResponseDto,
-            countries.map((e: BookingDoc | BookingEntity) =>
-                e instanceof Document ? e.toObject() : e
+            bookings.map((booking: BookingDoc | BookingEntity) =>
+                booking instanceof Document ? booking.toObject() : booking
             )
         );
     }

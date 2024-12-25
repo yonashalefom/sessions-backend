@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from 'src/modules/auth/auth.module';
+import { BookingModule } from 'src/modules/booking/booking.module';
+import { BookingExpertController } from 'src/modules/booking/controllers/booking.expert.controller';
 import { CategoryModule } from 'src/modules/category/category.module';
 import { EventExpertController } from 'src/modules/events/controllers/event.expert.controller';
 import { EventModule } from 'src/modules/events/event.module';
@@ -14,6 +16,7 @@ import { UserModule } from 'src/modules/user/user.module';
         UserExpertController,
         EventExpertController,
         ScheduleExpertController,
+        BookingExpertController,
     ],
     providers: [],
     exports: [],
@@ -24,6 +27,7 @@ import { UserModule } from 'src/modules/user/user.module';
         CategoryModule,
         EventModule,
         ScheduleModule,
+        BookingModule,
     ],
 })
 export class RoutesExpertModule {}

@@ -68,11 +68,7 @@ export class BookingUserController {
     @ApiKeyProtected()
     @Post('/create')
     async createBooking(
-        @AuthJwtPayload<AuthJwtAccessPayloadDto>(
-            '_id',
-            'eventId',
-            UserActiveParsePipe
-        )
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserActiveParsePipe)
         user: IUserDoc,
         @Body()
         body: BookingCreateRequestDto
