@@ -2,6 +2,7 @@
     "list": "List of bookings retrieved successfully.",
     "get": "Booking details fetched successfully.",
     "create": "New booking created successfully.",
+    "cancelBooking": "Booking cancelled successfully.",
     "inactive": "Booking marked as inactive.",
     "active": "Booking marked as active.",
     "blocked": "Booking blocked successfully.",

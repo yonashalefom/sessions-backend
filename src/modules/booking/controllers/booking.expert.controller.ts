@@ -1,8 +1,10 @@
 import {
+    Body,
     Controller,
     Get,
     NotFoundException,
     Param,
+    Put,
     Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -32,7 +34,10 @@ import {
     BOOKING_DEFAULT_AVAILABLE_SEARCH,
     BOOKING_DEFAULT_IS_ACTIVE,
 } from 'src/modules/booking/constants/booking.list.constant';
+import { CancelBookingValidation } from 'src/modules/booking/decorators/booking.common.decorator';
+import { CancelBookingRequestDto } from 'src/modules/booking/dtos/request/booking.create.request.dto';
 import { BookingShortResponseDto } from 'src/modules/booking/dtos/response/booking.get.response.dto';
+import { ENUM_BOOKING_STATUS_TYPE } from 'src/modules/booking/enums/booking.enum';
 import { ENUM_BOOKING_STATUS_CODE_ERROR } from 'src/modules/booking/enums/booking.status-code.enum';
 import { BookingParsePipe } from 'src/modules/booking/pipes/booking.parse.pipe';
 import { BookingDoc } from 'src/modules/booking/repository/entities/booking.entity';
@@ -49,7 +54,11 @@ import {
 } from 'src/modules/policy/enums/policy.enum';
 import { UserGetResponseDto } from 'src/modules/user/dtos/response/user.get.response.dto';
 import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
-import { UserActiveParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
+import {
+    UserActiveParsePipe,
+    UserParsePipe,
+} from 'src/modules/user/pipes/user.parse.pipe';
+import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
 
 @ApiTags('modules.shared.event')
 @Controller({
@@ -153,6 +162,38 @@ export class BookingExpertController {
         const mapped: BookingShortResponseDto =
             await this.bookingService.mapGetShort(booking);
         return { data: mapped };
+    }
+    // endregion
+
+    // region Cancel Booking
+    @Response('booking.cancelBooking')
+    @CancelBookingValidation()
+    @AuthJwtAccessProtected()
+    @ApiKeyProtected()
+    @Put('/cancel/:bookingId')
+    async updateProfile(
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserParsePipe)
+        user: UserDoc,
+        @Param('bookingId', RequestRequiredPipe, BookingParsePipe)
+        booking: BookingDoc,
+        @Body()
+        body: CancelBookingRequestDto
+    ): Promise<void> {
+        if (
+            (booking.expertId as unknown as UserGetResponseDto)._id !== user._id
+        ) {
+            throw new NotFoundException({
+                statusCode: ENUM_BOOKING_STATUS_CODE_ERROR.NOT_FOUND,
+                message: 'booking.error.notFound',
+            });
+        }
+
+        await this.bookingService.cancelBooking(booking, {
+            status: ENUM_BOOKING_STATUS_TYPE.CANCELLED,
+            ...body,
+        });
+
+        return;
     }
     // endregion
 }

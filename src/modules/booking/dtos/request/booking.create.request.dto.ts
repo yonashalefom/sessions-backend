@@ -1,4 +1,6 @@
-type BookingType = 'inapp_meeting' | 'external_meeting';
+import { BookingStatus } from 'src/modules/booking/repository/entities/booking.entity';
+
+type BookingType = 'INAPP_MEETING' | 'EXTERNAL_MEETING';
 
 export class BookingCreateRequestDto {
     userId: string;
@@ -22,4 +24,9 @@ export class BookingCreateRequestDto {
     meetingId?: string;
 
     meetingPassword?: string;
+}
+
+export class CancelBookingRequestDto {
+    status: BookingStatus;
+    cancellationReason?: string;
 }

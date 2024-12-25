@@ -8,9 +8,13 @@ import {
     IDatabaseFindAllOptions,
     IDatabaseGetTotalOptions,
     IDatabaseOptions,
+    IDatabaseSaveOptions,
 } from 'src/common/database/interfaces/database.interface';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
-import { BookingCreateRequestDto } from 'src/modules/booking/dtos/request/booking.create.request.dto';
+import {
+    BookingCreateRequestDto,
+    CancelBookingRequestDto,
+} from 'src/modules/booking/dtos/request/booking.create.request.dto';
 import {
     BookingGetResponseDto,
     BookingListResponseDto,
@@ -53,6 +57,17 @@ export class BookingService implements IBookingService {
         const find: any = DatabaseQueryAnd([{ title: event }, { owner }]);
         console.log('Find is: ' + JSON.stringify(find, null, 2));
         return this.bookingRepository.findOne(find, options);
+    }
+
+    async cancelBooking(
+        repository: BookingDoc,
+        { status, cancellationReason }: CancelBookingRequestDto,
+        options?: IDatabaseSaveOptions
+    ): Promise<BookingDoc> {
+        repository.status = status;
+        repository.cancellationReason = cancellationReason;
+
+        return this.bookingRepository.save(repository, options);
     }
 
     async findOneById(
