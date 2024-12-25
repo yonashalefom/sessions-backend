@@ -2,6 +2,7 @@ import {
     BadRequestException,
     Body,
     Controller,
+    Get,
     InternalServerErrorException,
     NotFoundException,
     Post,
@@ -12,6 +13,11 @@ import { ENUM_APP_STATUS_CODE_ERROR } from 'src/app/enums/app.status-code.enum';
 import { DatabaseConnection } from 'src/common/database/decorators/database.decorator';
 import { DatabaseIdResponseDto } from 'src/common/database/dtos/response/database.id.response.dto';
 import { HelperDateService } from 'src/common/helper/services/helper.date.service';
+import {
+    PaginationQuery,
+    PaginationQueryFilterInBoolean,
+} from 'src/common/pagination/decorators/pagination.decorator';
+import { PaginationListDto } from 'src/common/pagination/dtos/pagination.list.dto';
 import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
 import {
     AuthJwtAccessProtected,
@@ -19,8 +25,14 @@ import {
 } from 'src/modules/auth/decorators/auth.jwt.decorator';
 import { PaginationService } from 'src/common/pagination/services/pagination.service';
 import { AuthJwtAccessPayloadDto } from 'src/modules/auth/dtos/jwt/auth.jwt.access-payload.dto';
+import {
+    BOOKING_DEFAULT_AVAILABLE_SEARCH,
+    BOOKING_DEFAULT_IS_ACTIVE,
+} from 'src/modules/booking/constants/booking.list.constant';
 import { CreateBookingValidation } from 'src/modules/booking/decorators/booking.common.decorator';
 import { BookingCreateRequestDto } from 'src/modules/booking/dtos/request/booking.create.request.dto';
+import { BookingShortResponseDto } from 'src/modules/booking/dtos/response/booking.get.response.dto';
+import { BookingDoc } from 'src/modules/booking/repository/entities/booking.entity';
 import { BookingService } from 'src/modules/booking/services/booking.service';
 import { EventService } from 'src/modules/events/services/event.service';
 import {
@@ -32,8 +44,14 @@ import {
     PolicyAbilityProtected,
     PolicyRoleProtected,
 } from 'src/modules/policy/decorators/policy.decorator';
-import { Response } from 'src/common/response/decorators/response.decorator';
-import { IResponse } from 'src/common/response/interfaces/response.interface';
+import {
+    Response,
+    ResponsePaging,
+} from 'src/common/response/decorators/response.decorator';
+import {
+    IResponse,
+    IResponsePaging,
+} from 'src/common/response/interfaces/response.interface';
 import { ENUM_ROLE_STATUS_CODE_ERROR } from 'src/modules/role/enums/role.status-code.enum';
 import { ScheduleService } from 'src/modules/schedules/services/schedule.service';
 import { SlotService } from 'src/modules/slot/services/slot.service';
@@ -201,71 +219,55 @@ export class BookingUserController {
 
     // endregion
 
-    // region Get ALl Categories
-    // @ResponsePaging('category.list')
-    // @PolicyAbilityProtected({
-    //     subject: ENUM_POLICY_SUBJECT.CATEGORY,
-    //     action: [ENUM_POLICY_ACTION.READ],
-    // })
-    // @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
-    // @AuthJwtAccessProtected()
-    // @ApiKeyProtected()
-    // @Get('/list')
-    // async list(
-    //     @PaginationQuery({
-    //         availableSearch: CATEGORY_DEFAULT_AVAILABLE_SEARCH,
-    //     })
-    //     { _search, _limit, _offset, _order }: PaginationListDto,
-    //     @PaginationQueryFilterInBoolean('isActive', CATEGORY_DEFAULT_IS_ACTIVE)
-    //     isActive: Record<string, any>
-    // ): Promise<IResponsePaging<CategoryListResponseDto>> {
-    //     console.log(JSON.stringify(isActive, null, 2));
-    //     const find: Record<string, any> = {
-    //         ..._search,
-    //         ...isActive,
-    //     };
-    //
-    //     const categories: EventDoc[] = await this.bookingService.findAll(find, {
-    //         paging: {
-    //             limit: _limit,
-    //             offset: _offset,
-    //         },
-    //         order: _order,
-    //     });
-    //     const total: number = await this.bookingService.getTotal(find);
-    //     const totalPage: number = this.paginationService.totalPage(
-    //         total,
-    //         _limit
-    //     );
-    //
-    //     const mapped: EventListResponseDto[] =
-    //         await this.bookingService.mapList(categories);
-    //
-    //     return {
-    //         _pagination: { total, totalPage },
-    //         data: mapped,
-    //     };
-    // }
+    // region Get User Bookings
+    @ResponsePaging('booking.list')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.BOOKING,
+        action: [ENUM_POLICY_ACTION.READ],
+    })
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.EXPERT)
+    @AuthJwtAccessProtected()
+    @ApiKeyProtected()
+    @Get('/get/all')
+    async list(
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserActiveParsePipe)
+        user: IUserDoc,
+        @PaginationQuery({
+            availableSearch: BOOKING_DEFAULT_AVAILABLE_SEARCH,
+        })
+        { _search, _limit, _offset, _order }: PaginationListDto,
+        @PaginationQueryFilterInBoolean('isActive', BOOKING_DEFAULT_IS_ACTIVE)
+        isActive: Record<string, any>
+    ): Promise<IResponsePaging<BookingShortResponseDto>> {
+        const find: Record<string, any> = {
+            ..._search,
+            ...isActive,
+            userId: user._id,
+        };
 
-    // endregion
+        const bookings: BookingDoc[] = await this.bookingService.findAll(find, {
+            paging: {
+                limit: _limit,
+                offset: _offset,
+            },
+            order: _order,
+            join: true,
+        });
 
-    // region Get Event Details
-    // @Response('event.get')
-    // @PolicyAbilityProtected({
-    //     subject: ENUM_POLICY_SUBJECT.CATEGORY,
-    //     action: [ENUM_POLICY_ACTION.READ],
-    // })
-    // @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
-    // @AuthJwtAccessProtected()
-    // @Get('/get/:event')
-    // async get(
-    //     @Param('event', RequestRequiredPipe, EventParsePipe)
-    //     event: EventDoc
-    // ): Promise<IResponse<EventGetResponseDto>> {
-    //     const mapped: EventGetResponseDto =
-    //         await this.bookingService.mapGet(event);
-    //     return { data: mapped };
-    // }
+        const total: number = await this.eventService.getTotal(find);
+        const totalPage: number = this.paginationService.totalPage(
+            total,
+            _limit
+        );
+
+        const mapped: BookingShortResponseDto[] =
+            await this.bookingService.mapShort(bookings);
+
+        return {
+            _pagination: { total, totalPage },
+            data: mapped,
+        };
+    }
 
     // endregion
 }
