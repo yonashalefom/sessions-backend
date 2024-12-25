@@ -1,0 +1,17 @@
+{
+    "list": "List of bookings retrieved successfully.",
+    "get": "Booking details fetched successfully.",
+    "create": "New booking created successfully.",
+    "inactive": "Booking marked as inactive.",
+    "active": "Booking marked as active.",
+    "blocked": "Booking blocked successfully.",
+    "error": {
+        "eventExist": "Booking already exists.",
+        "blocked": "Booking is blocked.",
+        "deleted": "Booking has been deleted.",
+        "inactive": "Booking is inactive.",
+        "blockedInvalid": "Invalid blocked status.",
+        "notFound": "Booking not found.",
+        "statusInvalid": "Invalid event status."
+    }
+}

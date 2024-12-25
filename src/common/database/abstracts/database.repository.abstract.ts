@@ -124,6 +124,7 @@ export abstract class DatabaseRepositoryAbstract<
         }
 
         if (options?.join) {
+            console.log('Trying to populate...');
             repository.populate(
                 (typeof options.join === 'boolean' && options.join
                     ? this._join

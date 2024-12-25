@@ -59,6 +59,7 @@ export class BookingService implements IBookingService {
         _id: string,
         options?: IDatabaseOptions
     ): Promise<BookingDoc> {
+        console.log(JSON.stringify(options, null, 2));
         return this.bookingRepository.findOneById(_id, options);
     }
 

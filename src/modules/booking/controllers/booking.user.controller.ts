@@ -5,6 +5,7 @@ import {
     Get,
     InternalServerErrorException,
     NotFoundException,
+    Param,
     Post,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -18,6 +19,7 @@ import {
     PaginationQueryFilterInBoolean,
 } from 'src/common/pagination/decorators/pagination.decorator';
 import { PaginationListDto } from 'src/common/pagination/dtos/pagination.list.dto';
+import { RequestRequiredPipe } from 'src/common/request/pipes/request.required.pipe';
 import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
 import {
     AuthJwtAccessProtected,
@@ -32,6 +34,8 @@ import {
 import { CreateBookingValidation } from 'src/modules/booking/decorators/booking.common.decorator';
 import { BookingCreateRequestDto } from 'src/modules/booking/dtos/request/booking.create.request.dto';
 import { BookingShortResponseDto } from 'src/modules/booking/dtos/response/booking.get.response.dto';
+import { ENUM_BOOKING_STATUS_CODE_ERROR } from 'src/modules/booking/enums/booking.status-code.enum';
+import { BookingParsePipe } from 'src/modules/booking/pipes/booking.parse.pipe';
 import { BookingDoc } from 'src/modules/booking/repository/entities/booking.entity';
 import { BookingService } from 'src/modules/booking/services/booking.service';
 import { EventService } from 'src/modules/events/services/event.service';
@@ -55,6 +59,7 @@ import {
 import { ENUM_ROLE_STATUS_CODE_ERROR } from 'src/modules/role/enums/role.status-code.enum';
 import { ScheduleService } from 'src/modules/schedules/services/schedule.service';
 import { SlotService } from 'src/modules/slot/services/slot.service';
+import { UserGetResponseDto } from 'src/modules/user/dtos/response/user.get.response.dto';
 import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
 import { UserActiveParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 
@@ -148,10 +153,6 @@ export class BookingUserController {
         }
         // endregion
 
-        console.log('eventId: ' + eventId);
-        console.log('startTime: ' + startTime);
-        console.log('endTime: ' + endTime);
-
         const dateRange = {
             start: startDate,
             end: endDate,
@@ -219,7 +220,7 @@ export class BookingUserController {
 
     // endregion
 
-    // region Get User Bookings
+    // region Get All User Bookings
     @ResponsePaging('booking.list')
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.BOOKING,
@@ -269,5 +270,38 @@ export class BookingUserController {
         };
     }
 
+    // endregion
+
+    // region Get Booking Details By Id
+    @Response('booking.get')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.BOOKING,
+        action: [ENUM_POLICY_ACTION.READ],
+    })
+    @PolicyRoleProtected(
+        ENUM_POLICY_ROLE_TYPE.EXPERT,
+        ENUM_POLICY_ROLE_TYPE.USER
+    )
+    @AuthJwtAccessProtected()
+    @Get('/get/:bookingId')
+    async get(
+        @Param('bookingId', RequestRequiredPipe, BookingParsePipe)
+        booking: BookingDoc,
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserActiveParsePipe)
+        user: IUserDoc
+    ): Promise<IResponse<BookingShortResponseDto>> {
+        if (
+            (booking.userId as unknown as UserGetResponseDto)._id !== user._id
+        ) {
+            throw new NotFoundException({
+                statusCode: ENUM_BOOKING_STATUS_CODE_ERROR.NOT_FOUND,
+                message: 'booking.error.notFound',
+            });
+        }
+
+        const mapped: BookingShortResponseDto =
+            await this.bookingService.mapGetShort(booking);
+        return { data: mapped };
+    }
     // endregion
 }

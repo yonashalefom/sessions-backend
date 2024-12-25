@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
     PaginationQuery,
@@ -26,11 +26,10 @@ import {
     BOOKING_DEFAULT_IS_ACTIVE,
 } from 'src/modules/booking/constants/booking.list.constant';
 import { BookingShortResponseDto } from 'src/modules/booking/dtos/response/booking.get.response.dto';
+import { ENUM_BOOKING_STATUS_CODE_ERROR } from 'src/modules/booking/enums/booking.status-code.enum';
+import { BookingParsePipe } from 'src/modules/booking/pipes/booking.parse.pipe';
 import { BookingDoc } from 'src/modules/booking/repository/entities/booking.entity';
 import { BookingService } from 'src/modules/booking/services/booking.service';
-import { EventShortResponseDto } from 'src/modules/events/dtos/response/event.get.response.dto';
-import { EventParsePipe } from 'src/modules/events/pipes/event.parse.pipe';
-import { EventDoc } from 'src/modules/events/repository/entities/event.entity';
 import { EventService } from 'src/modules/events/services/event.service';
 import {
     PolicyAbilityProtected,
@@ -41,12 +40,9 @@ import {
     ENUM_POLICY_ROLE_TYPE,
     ENUM_POLICY_SUBJECT,
 } from 'src/modules/policy/enums/policy.enum';
+import { UserGetResponseDto } from 'src/modules/user/dtos/response/user.get.response.dto';
 import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
-import {
-    UserActiveParsePipe,
-    UserParsePipe,
-} from 'src/modules/user/pipes/user.parse.pipe';
-import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
+import { UserActiveParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 
 @ApiTags('modules.shared.event')
 @Controller({
@@ -112,10 +108,10 @@ export class BookingExpertController {
 
     // endregion
 
-    // region Get Event Details By Slug
-    @Response('event.get')
+    // region Get Booking Details By Id
+    @Response('booking.get')
     @PolicyAbilityProtected({
-        subject: ENUM_POLICY_SUBJECT.EVENT,
+        subject: ENUM_POLICY_SUBJECT.BOOKING,
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(
@@ -123,15 +119,24 @@ export class BookingExpertController {
         ENUM_POLICY_ROLE_TYPE.USER
     )
     @AuthJwtAccessProtected()
-    @Get('/user/:userId/:event')
+    @Get('/get/:bookingId')
     async get(
-        @Param('userId', RequestRequiredPipe, UserParsePipe)
-        user: UserDoc,
-        @Param('event', RequestRequiredPipe, EventParsePipe)
-        event: EventDoc
-    ): Promise<IResponse<EventShortResponseDto>> {
-        const mapped: EventShortResponseDto =
-            await this.eventService.mapGetShort(event);
+        @Param('bookingId', RequestRequiredPipe, BookingParsePipe)
+        booking: BookingDoc,
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserActiveParsePipe)
+        user: IUserDoc
+    ): Promise<IResponse<BookingShortResponseDto>> {
+        if (
+            (booking.expertId as unknown as UserGetResponseDto)._id !== user._id
+        ) {
+            throw new NotFoundException({
+                statusCode: ENUM_BOOKING_STATUS_CODE_ERROR.NOT_FOUND,
+                message: 'booking.error.notFound',
+            });
+        }
+
+        const mapped: BookingShortResponseDto =
+            await this.bookingService.mapGetShort(booking);
         return { data: mapped };
     }
     // endregion

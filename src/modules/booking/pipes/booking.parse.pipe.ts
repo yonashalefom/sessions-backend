@@ -1,22 +1,25 @@
 import { Injectable, NotFoundException, PipeTransform } from '@nestjs/common';
-import { ENUM_CATEGORY_STATUS_CODE_ERROR } from 'src/modules/category/enums/category.status-code.enum';
-import { EventDoc } from 'src/modules/events/repository/entities/event.entity';
-import { EventService } from 'src/modules/events/services/event.service';
+import { ENUM_BOOKING_STATUS_CODE_ERROR } from 'src/modules/booking/enums/booking.status-code.enum';
+import { BookingDoc } from 'src/modules/booking/repository/entities/booking.entity';
+import { BookingService } from 'src/modules/booking/services/booking.service';
 
 @Injectable()
 export class BookingParsePipe implements PipeTransform {
-    constructor(private readonly eventService: EventService) {}
+    constructor(private readonly bookingService: BookingService) {}
 
-    async transform(value: any): Promise<EventDoc> {
-        const event: EventDoc = await this.eventService.findOneById(value);
+    async transform(value: any): Promise<BookingDoc> {
+        const booking: BookingDoc = await this.bookingService.findOneById(
+            value,
+            { join: true }
+        );
 
-        if (!event) {
+        if (!booking) {
             throw new NotFoundException({
-                statusCode: ENUM_CATEGORY_STATUS_CODE_ERROR.NOT_FOUND,
-                message: 'category.error.notFound',
+                statusCode: ENUM_BOOKING_STATUS_CODE_ERROR.NOT_FOUND,
+                message: 'booking.error.notFound',
             });
         }
 
-        return event;
+        return booking;
     }
 }
