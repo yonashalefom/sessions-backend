@@ -9,6 +9,8 @@ import { CategoryAdminController } from 'src/modules/category/controllers/catego
 import { CountryAdminController } from 'src/modules/country/controllers/country.admin.controller';
 import { CountryModule } from 'src/modules/country/country.module';
 import { EmailModule } from 'src/modules/email/email.module';
+import { MeetingAdminController } from 'src/modules/meeting/controllers/meeting.admin.controller';
+import { MeetingModule } from 'src/modules/meeting/meeting.module';
 import { RoleAdminController } from 'src/modules/role/controllers/role.admin.controller';
 import { RoleModule } from 'src/modules/role/role.module';
 import { SettingAdminController } from 'src/modules/setting/controllers/setting.admin.controller';
@@ -27,6 +29,7 @@ import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
         CountryAdminController,
         CategoryAdminController,
         AuthAdminController,
+        MeetingAdminController,
     ],
     providers: [],
     exports: [],
@@ -39,6 +42,7 @@ import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
         EmailModule,
         CountryModule,
         CategoryModule,
+        MeetingModule,
         BullModule.registerQueue({
             connection: {
                 name: WORKER_CONNECTION_NAME,

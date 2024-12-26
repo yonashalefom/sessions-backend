@@ -60,6 +60,7 @@
     "@nestjs/throttler": "^6.1.0",
     "@ntegral/nestjs-sentry": "^4.0.1",
     "@sentry/node": "^8.25.0",
+    "@stream-io/node-sdk": "^0.4.5",
     "axios": "^1.7.3",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.12.5",

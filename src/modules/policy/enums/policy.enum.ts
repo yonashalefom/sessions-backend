@@ -32,6 +32,7 @@ export enum ENUM_POLICY_SUBJECT {
     SCHEDULE = 'SCHEDULE',
     SLOT = 'SLOT',
     BOOKING = 'BOOKING',
+    MEETING = 'MEETING',
 }
 
 export enum ENUM_POLICY_ROLE_TYPE {

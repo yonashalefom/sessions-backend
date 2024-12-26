@@ -10,6 +10,7 @@ import DocConfig from 'src/configs/doc.config';
 import MessageConfig from 'src/configs/message.config';
 import EmailConfig from 'src/configs/email.config';
 import RedisConfig from 'src/configs/redis.config';
+import StreamConfig from 'src/configs/stream.config';
 
 export default [
     AppConfig,
@@ -24,4 +25,5 @@ export default [
     MessageConfig,
     EmailConfig,
     RedisConfig,
+    StreamConfig,
 ];

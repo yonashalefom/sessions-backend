@@ -128,18 +128,7 @@ export class BookingService implements IBookingService {
         // create.duration = duration;
         create.isActive = true;
 
-        console.log('Booking Data: ');
-        console.log(JSON.stringify(create, null, 2));
-        try {
-            const as = await this.bookingRepository.create<BookingEntity>(
-                create,
-                options
-            );
-            console.log('KL: ' + JSON.stringify(as, null, 2));
-            return as;
-        } catch (err) {
-            console.log(JSON.stringify(err.message, null, 2));
-        }
+        return this.bookingRepository.create<BookingEntity>(create, options);
     }
 
     // async createMany(
