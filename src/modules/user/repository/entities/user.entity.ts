@@ -18,9 +18,9 @@ import {
     ENUM_USER_STATUS,
 } from 'src/modules/user/enums/user.enum';
 import {
-    UserAvailabilityEntity,
-    UserAvailabilitySchema,
-} from 'src/modules/user/repository/entities/embedded/user.availability';
+    ExpertProfileEntity,
+    ExpertProfileSchema,
+} from 'src/modules/user/repository/entities/embedded/user.expert.profile';
 import {
     UserMobileNumberEntity,
     UserMobileNumberSchema,
@@ -157,15 +157,22 @@ export class UserEntity extends DatabaseEntityAbstract {
 
     @DatabaseProp({
         required: false,
-        schema: UserAvailabilitySchema,
+        schema: ExpertProfileSchema,
     })
-    availability?: UserAvailabilityEntity;
+    expertProfile?: ExpertProfileEntity;
 
     @DatabaseProp({
         required: false,
         type: [{ type: String, ref: CategoryEntity.name }],
     })
     expertise: string[];
+
+    @DatabaseProp({
+        required: true,
+        type: Boolean,
+        default: false,
+    })
+    streamUserCreated: boolean;
 }
 
 export const UserSchema = DatabaseSchema(UserEntity);

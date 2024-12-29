@@ -10,6 +10,7 @@ export class CategoryParsePipe implements PipeTransform {
     async transform(value: any): Promise<CategoryDoc> {
         const category: CategoryDoc =
             await this.categoryService.findOneById(value);
+
         if (!category) {
             throw new NotFoundException({
                 statusCode: ENUM_CATEGORY_STATUS_CODE_ERROR.NOT_FOUND,

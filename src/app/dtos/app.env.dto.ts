@@ -155,6 +155,14 @@ export class AppEnvDto {
     SENTRY_DSN?: string;
 
     @IsNotEmpty()
+    @IsString()
+    STREAM_API_KEY?: string;
+
+    @IsNotEmpty()
+    @IsString()
+    STREAM_SECRET_KEY?: string;
+
+    @IsNotEmpty()
     @IsUrl()
     @IsString()
     CLIENT_URL: string;

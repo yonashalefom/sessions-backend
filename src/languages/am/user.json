@@ -1,0 +1,26 @@
+{
+    "list": "List of users retrieved successfully.",
+    "get": "User details fetched successfully.",
+    "create": "New user created successfully.",
+    "inactive": "User marked as inactive.",
+    "active": "User marked as active.",
+    "blocked": "User blocked successfully.",
+    "profile": "User profile retrieved successfully.",
+    "updateProfile": "User profile updated successfully.",
+    "updateProfileUpload": "User profile picture uploaded successfully.",
+    "deleteSelf": "User deleted successfully.",
+    "updateMobileNumber": "User update mobile number successfully.",
+    "updateClaimUsername": "User claim username successfully.",
+    "error": {
+        "mobileNumberExist": "Mobile number already exists.",
+        "emailExist": "Email already exists.",
+        "blocked": "User is blocked.",
+        "deleted": "User has been deleted.",
+        "inactive": "User is inactive.",
+        "mobileNumberNotAllowed": "Mobile number is not allowed.",
+        "blockedInvalid": "Invalid blocked status.",
+        "notFound": "User not found.",
+        "statusInvalid": "Invalid user status.",
+        "usernameExist": "Username has been taken."
+    }
+}

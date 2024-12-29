@@ -10,12 +10,7 @@ import { AuthJwtAccessPayloadDto } from 'src/modules/auth/dtos/jwt/auth.jwt.acce
 import { CategoryService } from 'src/modules/category/services/category.service';
 import { PolicyRoleProtected } from 'src/modules/policy/decorators/policy.decorator';
 import { ENUM_POLICY_ROLE_TYPE } from 'src/modules/policy/enums/policy.enum';
-import {
-    ExpertAvailabilityUpdateValidation,
-    ExpertExpertiseUpdateValidation,
-} from 'src/modules/user/decorators/user.common.decorator';
-import { ExpertUpdateAvailabilityDoc } from 'src/modules/user/docs/user.expert.doc';
-import { ExpertUpdateAvailabilityRequestDto } from 'src/modules/user/dtos/request/user.update-availability.dto';
+import { ExpertExpertiseUpdateValidation } from 'src/modules/user/decorators/user.common.decorator';
 import { UpdateExpertiseRequestDto } from 'src/modules/user/dtos/request/user.update-expertise.dto';
 import { ENUM_EXPERTISE_STATUS_CODE_ERROR } from 'src/modules/user/enums/user.status-code.enum';
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
@@ -33,28 +28,27 @@ export class UserExpertController {
         private readonly categoryService: CategoryService
     ) {}
 
-    // region Update Expert Availability Time
-    @ExpertUpdateAvailabilityDoc()
-    @Response('expert.updateAvailabilitySuccess')
-    @ExpertAvailabilityUpdateValidation()
-    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.EXPERT)
-    @AuthJwtAccessProtected()
-    @ApiKeyProtected()
-    @Put('availability/update')
-    async updateAvailability(
-        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserParsePipe)
-        user: UserDoc,
-        @Body()
-        { ...body }: ExpertUpdateAvailabilityRequestDto
-    ): Promise<void> {
-        await this.userService.updateAvailability(user, { ...body });
-
-        return;
-    }
-    // endregion
+    // // region Update Expert Availability Time
+    // @ExpertUpdateAvailabilityDoc()
+    // @Response('expert.updateAvailabilitySuccess')
+    // @ExpertAvailabilityUpdateValidation()
+    // @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.EXPERT)
+    // @AuthJwtAccessProtected()
+    // @ApiKeyProtected()
+    // @Put('availability/update')
+    // async updateAvailability(
+    //     @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserParsePipe)
+    //     user: UserDoc,
+    //     @Body()
+    //     { ...body }: ExpertUpdateAvailabilityRequestDto
+    // ): Promise<void> {
+    //     await this.userService.updateAvailability(user, { ...body });
+    //
+    //     return;
+    // }
+    // // endregion
 
     // region Update Expertise
-    @ExpertUpdateAvailabilityDoc()
     @Response('expert.updateExpertiseSuccess')
     @ExpertExpertiseUpdateValidation()
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.EXPERT)

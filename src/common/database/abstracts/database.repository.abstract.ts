@@ -516,7 +516,7 @@ export abstract class DatabaseRepositoryAbstract<
         ];
 
         if (options?.order) {
-            console.log('Agreegation has order: ');
+            console.log('Aggregation has order: ');
             console.log(JSON.stringify(options.order, null, 2));
             console.log('***********');
             const keysOrder = Object.keys(options?.order);

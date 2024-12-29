@@ -1,0 +1,17 @@
+{
+    "list": "List of events retrieved successfully.",
+    "get": "Event details fetched successfully.",
+    "create": "New Event created successfully.",
+    "inactive": "Event marked as inactive.",
+    "active": "Event marked as active.",
+    "blocked": "Event blocked successfully.",
+    "error": {
+        "EventExist": "Event already exists.",
+        "blocked": "Event is blocked.",
+        "deleted": "Event has been deleted.",
+        "inactive": "Event is inactive.",
+        "blockedInvalid": "Invalid blocked status.",
+        "notFound": "Event not found.",
+        "statusInvalid": "Invalid event status."
+    }
+}

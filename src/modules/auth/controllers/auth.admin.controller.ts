@@ -46,6 +46,7 @@ export class AuthAdminController {
         private readonly userService: UserService
     ) {}
 
+    // region Update Password
     @AuthAdminUpdatePasswordDoc()
     @Response('auth.updatePassword')
     @PolicyAbilityProtected({
@@ -111,4 +112,5 @@ export class AuthAdminController {
             });
         }
     }
+    // endregion
 }

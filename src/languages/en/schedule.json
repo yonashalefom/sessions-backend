@@ -1,0 +1,18 @@
+{
+    "list": "List of schedules retrieved successfully.",
+    "get": "Schedule details fetched successfully.",
+    "create": "New schedule created successfully.",
+    "inactive": "Schedule marked as inactive.",
+    "active": "Schedule marked as active.",
+    "blocked": "Schedule blocked successfully.",
+    "error": {
+        "scheduleExist": "Schedule already exists.",
+        "titleExist": "Schedule with similar title already exists.",
+        "blocked": "Schedule is blocked.",
+        "deleted": "Schedule has been deleted.",
+        "inactive": "Schedule is inactive.",
+        "blockedInvalid": "Invalid blocked status.",
+        "notFound": "Schedule not found.",
+        "statusInvalid": "Invalid schedule status."
+    }
+}

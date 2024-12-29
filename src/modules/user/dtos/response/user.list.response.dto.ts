@@ -1,7 +1,7 @@
-import { ApiHideProperty, ApiProperty, OmitType } from '@nestjs/swagger';
+import { OmitType } from '@nestjs/swagger';
 import { Exclude, Type } from 'class-transformer';
 import { CountryShortResponseDto } from 'src/modules/country/dtos/response/country.short.response.dto';
-import { RoleListResponseDto } from 'src/modules/role/dtos/response/role.list.response.dto';
+import { RoleShortResponseDto } from 'src/modules/role/dtos/response/role.get.response.dto';
 import {
     ENUM_USER_GENDER,
     ENUM_USER_SIGN_UP_FROM,
@@ -20,47 +20,30 @@ export class UserListResponseDto extends OmitType(UserGetResponseDto, [
     'mobileNumber',
     'address',
 ] as const) {
-    @ApiProperty({
-        required: true,
-        nullable: false,
-        type: RoleListResponseDto,
-    })
-    @Type(() => RoleListResponseDto)
-    role: RoleListResponseDto;
+    @Type(() => RoleShortResponseDto)
+    role: RoleShortResponseDto;
 
-    @ApiProperty({
-        required: true,
-        nullable: false,
-        type: CountryShortResponseDto,
-    })
     @Type(() => CountryShortResponseDto)
     country: CountryShortResponseDto;
 
-    @ApiHideProperty()
     @Exclude()
     mobileNumber?: UserUpdateMobileNumberRequestDto;
 
-    @ApiHideProperty()
     @Exclude()
     passwordExpired: Date;
 
-    @ApiHideProperty()
     @Exclude()
     passwordCreated: Date;
 
-    @ApiHideProperty()
     @Exclude()
     signUpDate: Date;
 
-    @ApiHideProperty()
     @Exclude()
     signUpFrom: ENUM_USER_SIGN_UP_FROM;
 
-    @ApiHideProperty()
     @Exclude()
     gender?: ENUM_USER_GENDER;
 
-    @ApiHideProperty()
     @Exclude()
     address?: string;
 }
