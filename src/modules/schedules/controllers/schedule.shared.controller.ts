@@ -17,8 +17,6 @@ import {
 } from 'src/common/response/interfaces/response.interface';
 import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
 import { AuthJwtAccessProtected } from 'src/modules/auth/decorators/auth.jwt.decorator';
-import { CATEGORY_DEFAULT_IS_ACTIVE } from 'src/modules/category/constants/category.list.constant';
-import { EventParsePipe } from 'src/modules/events/pipes/event.parse.pipe';
 import {
     PolicyAbilityProtected,
     PolicyRoleProtected,
@@ -28,8 +26,12 @@ import {
     ENUM_POLICY_ROLE_TYPE,
     ENUM_POLICY_SUBJECT,
 } from 'src/modules/policy/enums/policy.enum';
-import { SCHEDULE_DEFAULT_AVAILABLE_SEARCH } from 'src/modules/schedules/constants/schedule.list.constant';
+import {
+    SCHEDULE_DEFAULT_AVAILABLE_SEARCH,
+    SCHEDULE_DEFAULT_IS_ACTIVE,
+} from 'src/modules/schedules/constants/schedule.constants';
 import { ScheduleShortResponseDto } from 'src/modules/schedules/dtos/response/schedule.get.response.dto';
+import { ScheduleParsePipe } from 'src/modules/schedules/pipes/schedule.parse.pipe';
 import { ScheduleDoc } from 'src/modules/schedules/repository/entities/schedule.entity';
 import { ScheduleService } from 'src/modules/schedules/services/schedule.service';
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
@@ -38,7 +40,7 @@ import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
 @ApiTags('modules.shared.event')
 @Controller({
     version: '1',
-    path: '/events',
+    path: '/schedule',
 })
 export class ScheduleSharedController {
     constructor(
@@ -46,10 +48,10 @@ export class ScheduleSharedController {
         private readonly paginationService: PaginationService
     ) {}
 
-    // region Get User Events
-    @ResponsePaging('event.list')
+    // region Get Expert Schedules
+    @ResponsePaging('schedule.list')
     @PolicyAbilityProtected({
-        subject: ENUM_POLICY_SUBJECT.EVENT,
+        subject: ENUM_POLICY_SUBJECT.SCHEDULE,
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(
@@ -58,7 +60,7 @@ export class ScheduleSharedController {
     )
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
-    @Get('/user/:userId')
+    @Get('get/by-user/:userId')
     async list(
         @Param('userId', RequestRequiredPipe, UserParsePipe)
         user: UserDoc,
@@ -66,13 +68,13 @@ export class ScheduleSharedController {
             availableSearch: SCHEDULE_DEFAULT_AVAILABLE_SEARCH,
         })
         { _search, _limit, _offset, _order }: PaginationListDto,
-        @PaginationQueryFilterInBoolean('isActive', CATEGORY_DEFAULT_IS_ACTIVE)
+        @PaginationQueryFilterInBoolean('isActive', SCHEDULE_DEFAULT_IS_ACTIVE)
         isActive: Record<string, any>
     ): Promise<IResponsePaging<ScheduleShortResponseDto>> {
         const find: Record<string, any> = {
             ..._search,
             ...isActive,
-            owner: user._id,
+            userId: user._id,
         };
 
         const events: ScheduleDoc[] = await this.scheduleService.findAll(find, {
@@ -100,10 +102,10 @@ export class ScheduleSharedController {
 
     // endregion
 
-    // region Get Event Details By Slug
-    @Response('event.get')
+    // region Get Schedule Details By Id
+    @Response('schedule.get')
     @PolicyAbilityProtected({
-        subject: ENUM_POLICY_SUBJECT.EVENT,
+        subject: ENUM_POLICY_SUBJECT.SCHEDULE,
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(
@@ -111,15 +113,13 @@ export class ScheduleSharedController {
         ENUM_POLICY_ROLE_TYPE.USER
     )
     @AuthJwtAccessProtected()
-    @Get('/user/:userId/:event')
+    @Get('/get/:scheduleId')
     async get(
-        @Param('userId', RequestRequiredPipe, UserParsePipe)
-        user: UserDoc,
-        @Param('event', RequestRequiredPipe, EventParsePipe)
-        event: ScheduleDoc
+        @Param('scheduleId', RequestRequiredPipe, ScheduleParsePipe)
+        schedule: ScheduleDoc
     ): Promise<IResponse<ScheduleShortResponseDto>> {
         const mapped: ScheduleShortResponseDto =
-            await this.scheduleService.mapGetShort(event);
+            await this.scheduleService.mapGetShort(schedule);
         return { data: mapped };
     }
     // endregion

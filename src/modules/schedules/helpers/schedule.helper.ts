@@ -34,11 +34,6 @@ export const checkAvailabilityOverlap = (
                 existingTimeZone
             );
 
-            // console.log('newStartUTC: ' + newStartUTC);
-            // console.log('newEndUTC: ' + newEndUTC);
-            // console.log('existingStartUTC: ' + existingStartUTC);
-            // console.log('existingEndUTC: ' + existingEndUTC);
-
             if (newStartUTC < existingEndUTC && newEndUTC > existingStartUTC) {
                 return true; // Overlap detected
             }
