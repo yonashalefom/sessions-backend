@@ -7,6 +7,7 @@
     "blocked": "Schedule blocked successfully.",
     "error": {
         "scheduleExist": "Schedule already exists.",
+        "titleExist": "Schedule with similar title already exists.",
         "blocked": "Schedule is blocked.",
         "deleted": "Schedule has been deleted.",
         "inactive": "Schedule is inactive.",

@@ -9,6 +9,7 @@ import {
     IDatabaseGetTotalOptions,
     IDatabaseOptions,
 } from 'src/common/database/interfaces/database.interface';
+import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
 import { ScheduleCreateRequestDto } from 'src/modules/schedules/dtos/request/schedule.create.request.dto';
 import {
@@ -27,6 +28,7 @@ import { ScheduleRepository } from 'src/modules/schedules/repository/repositorie
 export class ScheduleService implements IScheduleService {
     constructor(
         private readonly scheduleRepository: ScheduleRepository,
+        private readonly helperDateService: HelperDateService,
         private readonly helperURLService: HelperURLService
     ) {}
 
@@ -45,12 +47,12 @@ export class ScheduleService implements IScheduleService {
     }
 
     async checkScheduleAlreadyExists(
-        event: string,
-        owner: string,
+        title: string,
+        userId: string,
         options?: IDatabaseOptions
     ): Promise<ScheduleDoc> {
-        console.log('Event is: ' + event);
-        const find: any = DatabaseQueryAnd([{ title: event }, { owner }]);
+        console.log('Event is: ' + title);
+        const find: any = DatabaseQueryAnd([{ title }, { userId }]);
         console.log('Find is: ' + JSON.stringify(find, null, 2));
         return this.scheduleRepository.findOne(find, options);
     }
@@ -130,6 +132,47 @@ export class ScheduleService implements IScheduleService {
     //     }
     // }
 
+    checkAvailabilityOverlap(
+        newAvailability,
+        existingAvailability,
+        newTimeZone: string,
+        existingTimeZone: string
+    ): boolean {
+        for (const existing of existingAvailability) {
+            const newDays = new Set(newAvailability.days);
+            const commonDays = existing.days.filter(day => newDays.has(day));
+
+            if (commonDays.length > 0) {
+                const newStartUTC = this.helperDateService.timeToUTC(
+                    newAvailability.startTime,
+                    newTimeZone
+                );
+                const newEndUTC = this.helperDateService.timeToUTC(
+                    newAvailability.endTime,
+                    newTimeZone
+                );
+
+                const existingStartUTC = this.helperDateService.timeToUTC(
+                    existing.startTime,
+                    existingTimeZone
+                );
+                const existingEndUTC = this.helperDateService.timeToUTC(
+                    existing.endTime,
+                    existingTimeZone
+                );
+
+                if (
+                    newStartUTC < existingEndUTC &&
+                    newEndUTC > existingStartUTC
+                ) {
+                    return true; // Overlap detected
+                }
+            }
+        }
+        return false;
+    }
+
+    // region Map Responses
     async mapList(
         categories: ScheduleDoc[] | ScheduleEntity[]
     ): Promise<ScheduleListResponseDto[]> {
@@ -169,17 +212,5 @@ export class ScheduleService implements IScheduleService {
             )
         );
     }
-
-    async filterValidExpertise(ids: string[]): Promise<string[]> {
-        // Fetch only the IDs that exist in the database
-        const existingExpertise = await this.findAll({ _id: { $in: ids } });
-
-        // Extract the valid IDs
-        const existingIds = existingExpertise.map(expertise =>
-            expertise._id.toString()
-        );
-
-        // Return only the IDs that exist
-        return ids.filter(id => existingIds.includes(id));
-    }
+    // endregion
 }

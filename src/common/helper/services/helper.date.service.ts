@@ -341,6 +341,10 @@ export class HelperDateService implements IHelperDateService {
         return moment.tz(date, tz).utc().format();
     }
 
+    timeToUTC(time: string, tz = this.defTz): string {
+        return moment(time, 'HH:mm:ss').tz(tz).utc().format();
+    }
+
     moment(date?: string | Date, tz = this.defTz): moment.Moment {
         return moment(date).tz(tz);
     }

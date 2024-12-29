@@ -60,10 +60,10 @@ export class ScheduleSharedController {
     )
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
-    @Get('get/by-user/:userId')
-    async list(
-        @Param('userId', RequestRequiredPipe, UserParsePipe)
-        user: UserDoc,
+    @Get('get/by-expert/:expertId')
+    async getExpertSchedules(
+        @Param('expertId', RequestRequiredPipe, UserParsePipe)
+        expert: UserDoc,
         @PaginationQuery({
             availableSearch: SCHEDULE_DEFAULT_AVAILABLE_SEARCH,
         })
@@ -74,7 +74,7 @@ export class ScheduleSharedController {
         const find: Record<string, any> = {
             ..._search,
             ...isActive,
-            userId: user._id,
+            userId: expert._id,
         };
 
         const events: ScheduleDoc[] = await this.scheduleService.findAll(find, {
