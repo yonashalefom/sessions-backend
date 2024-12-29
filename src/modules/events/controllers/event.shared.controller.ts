@@ -44,7 +44,7 @@ export class EventSharedController {
         private readonly paginationService: PaginationService
     ) {}
 
-    // region Get User Events
+    // region Get Expert Events
     @ResponsePaging('event.list')
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.EVENT,

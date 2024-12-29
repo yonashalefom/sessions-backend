@@ -1,11 +1,11 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { BookingModule } from 'src/modules/booking/booking.module';
 import { EventModule } from 'src/modules/events/event.module';
 import { ScheduleModule } from 'src/modules/schedules/schedule.module';
 import { SlotService } from 'src/modules/slot/services/slot.service';
 
 @Module({
-    imports: [EventModule, ScheduleModule, BookingModule],
+    imports: [EventModule, ScheduleModule, forwardRef(() => BookingModule)],
     exports: [SlotService],
     providers: [SlotService],
     controllers: [],

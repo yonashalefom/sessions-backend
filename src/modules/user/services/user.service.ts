@@ -414,6 +414,16 @@ export class UserService implements IUserService {
         return this.userRepository.save(repository, options);
     }
 
+    async updateStreamUserCreatedStatus(
+        repository: UserDoc,
+        created: boolean,
+        options?: IDatabaseSaveOptions
+    ): Promise<UserDoc> {
+        repository.streamUserCreated = created;
+
+        return this.userRepository.save(repository, options);
+    }
+
     async updatePassword(
         repository: UserDoc,
         { passwordHash, passwordExpired, salt, passwordCreated }: IAuthPassword,

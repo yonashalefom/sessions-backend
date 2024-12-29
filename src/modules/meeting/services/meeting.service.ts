@@ -1,7 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GetRateLimitsResponse, StreamClient } from '@stream-io/node-sdk';
-import { StreamResponse } from '@stream-io/node-sdk/dist/src/types';
+import {
+    CallRequest,
+    DeleteUsersRequest,
+    StreamClient,
+    UserRequest,
+} from '@stream-io/node-sdk';
 import { plainToInstance } from 'class-transformer';
 import { Document } from 'mongoose';
 import { DatabaseQueryAnd } from 'src/common/database/decorators/database.decorator';
@@ -14,21 +18,25 @@ import {
     IDatabaseSaveOptions,
 } from 'src/common/database/interfaces/database.interface';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
-import {
-    CancelMeetingRequestDto,
-    MeetingCreateRequestDto,
-} from 'src/modules/meeting/dtos/request/meeting.create.request.dto';
+import { MeetingCreateRequestDto } from 'src/modules/meeting/dtos/request/meeting.create.request.dto';
 import {
     MeetingGetResponseDto,
     MeetingListResponseDto,
     MeetingShortResponseDto,
 } from 'src/modules/meeting/dtos/response/meeting.get.response.dto';
+import {
+    ENUM_MEETING_CALL_TYPE,
+    ENUM_MEETING_USER_TYPE,
+} from 'src/modules/meeting/enums/meeting.enum';
 import { IMeetingService } from 'src/modules/meeting/interfaces/meeting.service.interface';
 import {
+    CallType,
     MeetingDoc,
     MeetingEntity,
 } from 'src/modules/meeting/repository/entities/meeting.entity';
 import { MeetingRepository } from 'src/modules/meeting/repository/repositories/meeting.repository';
+import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
+import { UserService } from 'src/modules/user/services/user.service';
 
 @Injectable()
 export class MeetingService implements IMeetingService {
@@ -37,6 +45,7 @@ export class MeetingService implements IMeetingService {
     constructor(
         private readonly meetingRepository: MeetingRepository,
         private readonly configService: ConfigService,
+        private readonly userService: UserService,
         private readonly helperURLService: HelperURLService
     ) {
         const apiKey = this.configService.get<string>('stream.apiKey');
@@ -69,17 +78,6 @@ export class MeetingService implements IMeetingService {
         const find: any = DatabaseQueryAnd([{ title: event }, { owner }]);
         console.log('Find is: ' + JSON.stringify(find, null, 2));
         return this.meetingRepository.findOne(find, options);
-    }
-
-    async cancelMeeting(
-        repository: MeetingDoc,
-        { status, cancellationReason }: CancelMeetingRequestDto,
-        options?: IDatabaseSaveOptions
-    ): Promise<MeetingDoc> {
-        repository.status = status;
-        repository.cancellationReason = cancellationReason;
-
-        return this.meetingRepository.save(repository, options);
     }
 
     async findOneById(
@@ -118,26 +116,13 @@ export class MeetingService implements IMeetingService {
     }
 
     async create(
-        {
-            startTime,
-            expertId,
-            endTime,
-            eventId,
-            description,
-        }: Partial<MeetingCreateRequestDto>,
-        userId: string,
+        { meetingId, type, createdBy }: Partial<MeetingCreateRequestDto>,
         options?: IDatabaseCreateOptions
     ): Promise<MeetingDoc> {
         const create: MeetingEntity = new MeetingEntity();
-        create.eventId = eventId;
-        create.userId = userId;
-        create.expertId = expertId;
-        create.description = description;
-        create.startTime = startTime;
-        create.endTime = endTime;
-        // create.slug = this.helperURLService.slugify(title);
-        // create.price = price;
-        // create.duration = duration;
+        create.meetingId = meetingId;
+        create.type = type;
+        create.createdBy = createdBy;
         create.isActive = true;
 
         return this.meetingRepository.create<MeetingEntity>(create, options);
@@ -183,88 +168,120 @@ export class MeetingService implements IMeetingService {
         );
     }
 
-    async filterValidExpertise(ids: string[]): Promise<string[]> {
-        // Fetch only the IDs that exist in the database
-        const existingExpertise = await this.findAll({ _id: { $in: ids } });
-
-        // Extract the valid IDs
-        const existingIds = existingExpertise.map(expertise =>
-            expertise._id.toString()
-        );
-
-        // Return only the IDs that exist
-        return ids.filter(id => existingIds.includes(id));
+    // region Create New User
+    async createUser(newUser: UserRequest) {
+        return await this.client.upsertUsers([newUser]);
     }
+    // endregion
 
-    // region New Methods
-    /**
-     * Creates a new user in the GetStream system.
-     * @param userId - The unique ID of the user.
-     * @param role - Role of the user (e.g., 'user', 'admin').
-     * @param name - User's name.
-     * @param image - URL to the user's profile image.
-     * @param custom - Additional custom data.
-     */
-    async createUser(
-        userId: string,
-        role: string,
-        name: string,
-        image: string,
-        custom: Record<string, any>
-    ) {
-        const newUser = {
-            id: userId,
-            role,
-            name,
-            image,
-            custom,
-        };
-        return this.client.upsertUsers([newUser]);
+    // region Create Stream Account If Needed
+    async createStreamAccountIfNeeded(
+        user: IUserDoc,
+        options: IDatabaseSaveOptions
+    ): Promise<void> {
+        if (!user.streamUserCreated) {
+            console.log('User already have a Stream Account');
+            console.log('Creating a New Account...');
+            const meetingUser = await this.createUser({
+                id: user._id,
+                role: ENUM_MEETING_USER_TYPE.USER,
+            });
+
+            if (!meetingUser?.users?.[user._id]) {
+                throw new InternalServerErrorException(
+                    'user.error.unableToCreateStreamUser'
+                );
+            }
+
+            const userDoc = await this.userService.findOneById(user._id, {
+                session: options.session,
+            });
+
+            await this.userService.updateStreamUserCreatedStatus(
+                userDoc,
+                true,
+                options
+            );
+        } else {
+            console.log('User already have a Stream Account.');
+        }
     }
+    // endregion
 
-    /**
-     * Generates a token for a specific user.
-     * @param userId - The ID of the user.
-     * @param validityInSeconds - Token validity duration in seconds.
-     */
+    // region Generate JWT Token for User
     async generateUserToken(userId: string, validityInSeconds: number = 3600) {
         return this.client.generateUserToken({
             user_id: userId,
             validity_in_seconds: validityInSeconds,
         });
     }
+    // endregion
 
-    /**
-     * Creates a video call with specified members and custom data.
-     * @param callType - The type of the call (e.g., 'default').
-     * @param callId - A unique ID for the call.
-     * @param createdBy - The ID of the user creating the call.
-     * @param members - Array of members (user IDs and roles) participating in the call.
-     * @param customData - Additional custom data for the call.
-     */
+    // region Create Call
     async createCall(
-        callType: string,
+        callType: CallType,
         callId: string,
-        createdBy: string,
-        members: Array<{ user_id: string; role?: string }>,
-        customData: Record<string, any>
+        callData: CallRequest
     ) {
-        const call = this.client.video.call(callType, callId);
-        return call.create({
-            data: {
-                created_by_id: createdBy,
-                members,
-                custom: customData,
-            },
-        });
-    }
+        try {
+            const call = this.client.video.call(callType, callId);
 
-    /**
-     * Retrieves or creates a video call.
-     * @param callType - The type of the call.
-     * @param callId - The ID of the call.
-     * @param data - Data used to create or retrieve the call.
-     */
+            return call.getOrCreate({
+                data: callData,
+            });
+        } catch (err) {
+            console.log(JSON.stringify(err));
+        }
+    }
+    // endregion
+
+    // region Create Default Call
+    async createDefaultCall(
+        meetingId: string,
+        roomOwnerId: string,
+        guestId: string,
+        startDate: Date,
+        duration: number,
+        description?: string
+    ) {
+        const callData: CallRequest = {
+            created_by: { id: roomOwnerId },
+            members: [
+                {
+                    user_id: roomOwnerId,
+                    role: ENUM_MEETING_USER_TYPE.USER,
+                },
+                {
+                    user_id: roomOwnerId,
+                    role: ENUM_MEETING_USER_TYPE.CALL_MEMBER,
+                },
+            ],
+            starts_at: startDate,
+            settings_override: {
+                limits: {
+                    max_duration_seconds: duration * 60,
+                },
+            },
+            custom: {
+                description,
+            },
+        };
+
+        // if (description?.length) {
+        //     callData.custom = {
+        //         description: description,
+        //     };
+        // }
+
+        return await this.createCall(
+            ENUM_MEETING_CALL_TYPE.DEFAULT,
+            meetingId,
+            callData
+        );
+    }
+    // endregion
+
+    // region Retrieve or Create a Video Call
     async getOrCreateCall(
         callType: string,
         callId: string,
@@ -273,14 +290,60 @@ export class MeetingService implements IMeetingService {
         const call = this.client.video.call(callType, callId);
         return call.getOrCreate({ data });
     }
+    // endregion
 
     // region Get Rate Limit
-    async getServerSideRateLimit(): Promise<
-        StreamResponse<GetRateLimitsResponse>
-    > {
-        // 1. Get Rate limits, server-side platform
+    async getServerSideRateLimit() {
         return await this.client.getRateLimits({ server_side: true });
     }
     // endregion
+
+    // region Delete Users
+    async deleteUsers(deleteUserRequest: DeleteUsersRequest) {
+        return await this.client.deleteUsers(deleteUserRequest);
+    }
+    // endregion
+
+    // region Delete Call
+    async deleteCall(callId: string) {
+        const callType = 'default';
+        const call = this.client.video.call(callType, callId);
+
+        return await call.delete({ hard: true });
+    }
+    // endregion
+
+    // region Get Async Task Status
+    async getAsyncTaskStats(taskId: string) {
+        return await this.client.getTask({ id: taskId });
+    }
+    // endregion
+
+    // region Get Meeting User Info By Id
+    async getMeetingUserInfo(userId: string) {
+        // return await this.client.getTask({ id: taskId });
+        try {
+            const d = await this.client.queryUsers({
+                payload: {
+                    filter_conditions: {
+                        id: userId,
+                    },
+                },
+            });
+            console.log('Data is: ');
+            console.log(JSON.stringify(d, null, 2));
+        } catch (e) {
+            console.log('Error is: ');
+            console.log(JSON.stringify(e, null, 2));
+        }
+
+        return await this.client.queryUsers({
+            payload: {
+                filter_conditions: {
+                    id: userId,
+                },
+            },
+        });
+    }
     // endregion
 }

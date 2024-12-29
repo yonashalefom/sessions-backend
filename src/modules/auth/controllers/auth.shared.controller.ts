@@ -53,6 +53,7 @@ export class AuthSharedController {
         private readonly authService: AuthService
     ) {}
 
+    // region Refresh Auth Token
     @AuthSharedRefreshDoc()
     @Response('auth.refresh')
     @AuthJwtRefreshProtected()
@@ -88,7 +89,9 @@ export class AuthSharedController {
             },
         };
     }
+    // endregion
 
+    // region Change Password
     @AuthSharedChangePasswordDoc()
     @Response('auth.changePassword')
     @AuthJwtAccessProtected()
@@ -168,4 +171,5 @@ export class AuthSharedController {
             });
         }
     }
+    // endregion
 }

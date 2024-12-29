@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import moment from 'moment-timezone';
 import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
@@ -17,6 +17,7 @@ export class SlotService implements ISlotService {
     constructor(
         private readonly scheduleService: ScheduleService,
         private readonly eventService: EventService,
+        @Inject(forwardRef(() => BookingService))
         private readonly bookingService: BookingService,
         private readonly helperDateService: HelperDateService,
         private readonly helperURLService: HelperURLService
@@ -46,7 +47,6 @@ export class SlotService implements ISlotService {
             }
         }
 
-        console.log(JSON.stringify(availableSlots, null, 2));
         // Fetch all active bookings for the expert
         const bookings = await this.bookingService.findAll({
             expertId: expertEvent.owner,

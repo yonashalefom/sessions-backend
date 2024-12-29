@@ -166,6 +166,13 @@ export class UserEntity extends DatabaseEntityAbstract {
         type: [{ type: String, ref: CategoryEntity.name }],
     })
     expertise: string[];
+
+    @DatabaseProp({
+        required: true,
+        type: Boolean,
+        default: false,
+    })
+    streamUserCreated: boolean;
 }
 
 export const UserSchema = DatabaseSchema(UserEntity);

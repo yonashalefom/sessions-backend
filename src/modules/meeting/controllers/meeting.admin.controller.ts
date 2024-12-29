@@ -1,8 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { GetRateLimitsResponse } from '@stream-io/node-sdk';
+import {
+    DeleteUsersRequest,
+    DeleteUsersResponse,
+    GetRateLimitsResponse,
+    QueryUsersResponse,
+} from '@stream-io/node-sdk';
 import { StreamResponse } from '@stream-io/node-sdk/dist/src/types';
 import { PaginationService } from 'src/common/pagination/services/pagination.service';
+import { RequestRequiredPipe } from 'src/common/request/pipes/request.required.pipe';
 import { Response } from 'src/common/response/decorators/response.decorator';
 import { IResponse } from 'src/common/response/interfaces/response.interface';
 import { MeetingService } from 'src/modules/meeting/services/meeting.service';
@@ -55,10 +61,96 @@ export class MeetingAdminController {
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('/get/rate-limit/server')
-    async get(): Promise<IResponse<StreamResponse<GetRateLimitsResponse>>> {
+    async getServerRateLimit(): Promise<
+        IResponse<StreamResponse<GetRateLimitsResponse>>
+    > {
         const rateLimit = await this.meetingService.getServerSideRateLimit();
 
         return { data: rateLimit };
+    }
+
+    // endregion
+
+    // region Get Async Task Status
+    @Response('meeting.getAsyncTaskStats')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.STREAM_ASYNC_TASK,
+        action: [ENUM_POLICY_ACTION.READ],
+    })
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @AuthJwtAccessProtected()
+    @ApiKeyProtected()
+    @Get('/get/async-task/:taskId')
+    async getAsyncTaskStats(
+        @Param('taskId', RequestRequiredPipe)
+        taskId: string
+    ): Promise<IResponse<DeleteUsersResponse>> {
+        const taskStats = await this.meetingService.getAsyncTaskStats(taskId);
+
+        return { data: taskStats };
+    }
+
+    // endregion
+
+    // region Get Meeting User Info By Id
+    @Response('meeting.getStreamUserInfo')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.MEETING_USER,
+        action: [ENUM_POLICY_ACTION.READ],
+    })
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @AuthJwtAccessProtected()
+    @ApiKeyProtected()
+    @Get('/get/user/:userId')
+    async getMeetingUserInfo(
+        @Param('userId', RequestRequiredPipe)
+        userId: string
+    ): Promise<IResponse<QueryUsersResponse>> {
+        const userInfo = await this.meetingService.getMeetingUserInfo(userId);
+
+        return { data: userInfo };
+    }
+
+    // endregion
+
+    // region Delete Meeting Calls
+    @Response('meeting.deleteCall')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.MEETING,
+        action: [ENUM_POLICY_ACTION.DELETE],
+    })
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @AuthJwtAccessProtected()
+    @ApiKeyProtected()
+    @Delete('/calls/delete/:callId')
+    async deleteCalls(
+        @Param('callId', RequestRequiredPipe)
+        callId: string
+    ): Promise<IResponse<StreamResponse<GetRateLimitsResponse>>> {
+        const deleteCall = await this.meetingService.deleteCall(callId);
+
+        return { data: deleteCall };
+    }
+
+    // endregion
+
+    // region Delete Users
+    @Response('meeting.deleteUser')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.MEETING_USER,
+        action: [ENUM_POLICY_ACTION.DELETE],
+    })
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @AuthJwtAccessProtected()
+    @ApiKeyProtected()
+    @Delete('/users/delete')
+    async deleteUsers(
+        @Body()
+        body: DeleteUsersRequest
+    ): Promise<IResponse<DeleteUsersResponse>> {
+        const deleteUsers = await this.meetingService.deleteUsers(body);
+
+        return { data: deleteUsers };
     }
 
     // endregion

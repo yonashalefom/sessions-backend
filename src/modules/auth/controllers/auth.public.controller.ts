@@ -21,6 +21,9 @@ import { AuthSocialGooglePayloadDto } from 'src/modules/auth/dtos/social/auth.so
 import { AuthService } from 'src/modules/auth/services/auth.service';
 import { Response } from 'src/common/response/decorators/response.decorator';
 import { IResponse } from 'src/common/response/interfaces/response.interface';
+import { ENUM_MEETING_USER_TYPE } from 'src/modules/meeting/enums/meeting.enum';
+import { MeetingService } from 'src/modules/meeting/services/meeting.service';
+import { ENUM_POLICY_ROLE_TYPE } from 'src/modules/policy/enums/policy.enum';
 import { ENUM_ROLE_STATUS_CODE_ERROR } from 'src/modules/role/enums/role.status-code.enum';
 import { AuthLoginResponseDto } from 'src/modules/auth/dtos/response/auth.login.response.dto';
 import {
@@ -37,7 +40,6 @@ import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
 import { AuthSignUpRequestDto } from 'src/modules/auth/dtos/request/auth.sign-up.request.dto';
 import { ENUM_COUNTRY_STATUS_CODE_ERROR } from 'src/modules/country/enums/country.status-code.enum';
 import { ClientSession } from 'mongoose';
-import { ENUM_EMAIL } from 'src/modules/email/enums/email.enum';
 import { ENUM_APP_STATUS_CODE_ERROR } from 'src/app/enums/app.status-code.enum';
 import { DatabaseConnection } from 'src/common/database/decorators/database.decorator';
 import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
@@ -60,6 +62,7 @@ export class AuthPublicController {
         private readonly userService: UserService,
         private readonly authService: AuthService,
         private readonly countryService: CountryService,
+        private readonly meetingService: MeetingService,
         private readonly roleService: RoleService
     ) {}
 
@@ -251,7 +254,7 @@ export class AuthPublicController {
         { email, name, password: passwordString, country }: AuthSignUpRequestDto
     ): Promise<void> {
         const promises: Promise<any>[] = [
-            this.roleService.findOneByName('user'),
+            this.roleService.findOneByType(ENUM_POLICY_ROLE_TYPE.USER),
             this.userService.existByEmail(email),
             this.countryService.findOneById(country),
         ];
@@ -287,35 +290,66 @@ export class AuthPublicController {
                 {
                     email,
                     name,
-                    password: passwordString,
                     country,
-                },
+                } as AuthSignUpRequestDto,
                 password,
                 { session }
             );
 
-            this.emailQueue.add(
-                ENUM_EMAIL.WELCOME,
-                {
-                    send: {
-                        email,
-                        name,
-                    },
-                },
-                {
-                    debounce: {
-                        id: `${ENUM_EMAIL.WELCOME}-${user._id}`,
-                        ttl: 1000,
-                    },
-                }
-            );
+            // region Create a Stream Account for User
+            const meetingUser = await this.meetingService.createUser({
+                id: user._id,
+                role: ENUM_MEETING_USER_TYPE.USER,
+            });
+
+            if (!meetingUser || !meetingUser.users) {
+                throw new InternalServerErrorException({
+                    statusCode:
+                        ENUM_USER_STATUS_CODE_ERROR.UNABLE_TO_CREATE_STREAM_USER,
+                    message: 'user.error.unableToCreateStreamUser',
+                });
+            }
+
+            if (
+                Object.values(meetingUser.users).some(
+                    streamUser => streamUser.id === user._id
+                )
+            ) {
+                await this.userService.updateStreamUserCreatedStatus(
+                    user,
+                    true,
+                    { session }
+                );
+            }
+            // endregion
+
+            // @todo Uncomment this to enable sending welcome emails
+            // region send emails to new users
+            // this.emailQueue.add(
+            //     ENUM_EMAIL.WELCOME,
+            //     {
+            //         send: {
+            //             email,
+            //             name,
+            //         },
+            //     },
+            //     {
+            //         debounce: {
+            //             id: `${ENUM_EMAIL.WELCOME}-${user._id}`,
+            //             ttl: 1000,
+            //         },
+            //     }
+            // );
+            // endregion
 
             await session.commitTransaction();
             await session.endSession();
         } catch (err: any) {
             await session.abortTransaction();
             await session.endSession();
-
+            console.log(
+                'Err in user Creation: ' + JSON.stringify(err, null, 2)
+            );
             throw new InternalServerErrorException({
                 statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
                 message: 'http.serverError.internalServerError',

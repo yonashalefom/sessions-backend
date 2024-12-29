@@ -6,6 +6,7 @@ import {
     EventDoc,
     EventEntity,
 } from 'src/modules/events/repository/entities/event.entity';
+import { UserEntity } from 'src/modules/user/repository/entities/user.entity';
 
 @Injectable()
 export class EventRepository extends DatabaseRepositoryAbstract<
@@ -16,6 +17,14 @@ export class EventRepository extends DatabaseRepositoryAbstract<
         @DatabaseModel(EventEntity.name)
         private readonly eventModel: Model<EventEntity>
     ) {
-        super(eventModel);
+        super(eventModel, [
+            {
+                path: 'owner',
+                localField: 'owner',
+                foreignField: '_id',
+                model: UserEntity.name,
+                justOne: true,
+            },
+        ]);
     }
 }

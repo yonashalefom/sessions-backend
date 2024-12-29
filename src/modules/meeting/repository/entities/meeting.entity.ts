@@ -5,26 +5,27 @@ import {
     DatabaseSchema,
 } from 'src/common/database/decorators/database.decorator';
 import { IDatabaseDocument } from 'src/common/database/interfaces/database.interface';
-import { EventEntity } from 'src/modules/events/repository/entities/event.entity';
-import {
-    MeetingReferenceEntity,
-    MeetingReferenceSchema,
-} from 'src/modules/meeting/repository/entities/meeting.reference.entity';
 import { UserEntity } from 'src/modules/user/repository/entities/user.entity';
 
-export type MeetingStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
+export type CallType = 'default';
 
-export const MeetingTableName = 'meetings';
+export const MeetingTableName = 'Meetings';
 
 @DatabaseEntity({ collection: MeetingTableName })
 export class MeetingEntity extends DatabaseEntityAbstract {
     @DatabaseProp({
         required: true,
-        ref: UserEntity.name,
+        unique: true,
         trim: true,
-        index: true,
     })
-    expertId: string;
+    meetingId: string;
+
+    @DatabaseProp({
+        required: true,
+        trim: true,
+        maxlength: 25,
+    })
+    type: CallType;
 
     @DatabaseProp({
         required: true,
@@ -32,86 +33,7 @@ export class MeetingEntity extends DatabaseEntityAbstract {
         trim: true,
         index: true,
     })
-    userId: string;
-
-    @DatabaseProp({
-        required: true,
-        ref: EventEntity.name,
-        trim: true,
-        index: true,
-    })
-    eventId: string;
-
-    @DatabaseProp({
-        required: false,
-        unique: true,
-        trim: true,
-        maxlength: 500,
-        minlength: 15,
-    })
-    description?: string;
-
-    @DatabaseProp({
-        required: true,
-        index: 'asc',
-        type: Date,
-    })
-    startTime: Date;
-
-    @DatabaseProp({
-        required: true,
-        index: 'asc',
-        type: Date,
-    })
-    endTime: Date;
-
-    @DatabaseProp({
-        required: false,
-        unique: true,
-        trim: true,
-        enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED'],
-        default: 'ACCEPTED',
-    })
-    status: MeetingStatus;
-
-    @DatabaseProp({
-        required: false,
-        unique: true,
-        trim: true,
-        maxlength: 500,
-        minlength: 3,
-    })
-    cancellationReason?: string;
-
-    @DatabaseProp({
-        required: false,
-        unique: true,
-        trim: true,
-        maxlength: 500,
-        minlength: 3,
-    })
-    rejectionReason?: string;
-
-    @DatabaseProp({
-        required: false,
-        type: Number,
-    })
-    rating?: number;
-
-    @DatabaseProp({
-        required: false,
-        unique: true,
-        trim: true,
-        maxlength: 500,
-        minlength: 1,
-    })
-    ratingFeedback?: string;
-
-    @DatabaseProp({
-        required: false,
-        schema: MeetingReferenceSchema,
-    })
-    meetingRef?: MeetingReferenceEntity;
+    createdBy: string;
 
     @DatabaseProp({
         required: true,

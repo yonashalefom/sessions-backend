@@ -26,6 +26,8 @@ import {
     PaginationQueryFilterEqual,
     PaginationQueryFilterInEnum,
 } from 'src/common/pagination/decorators/pagination.decorator';
+import { ENUM_MEETING_USER_TYPE } from 'src/modules/meeting/enums/meeting.enum';
+import { MeetingService } from 'src/modules/meeting/services/meeting.service';
 import {
     PolicyAbilityProtected,
     PolicyRoleProtected,
@@ -77,7 +79,6 @@ import { UserStatusPipe } from 'src/modules/user/pipes/user.status.pipe';
 import { UserUpdateRequestDto } from 'src/modules/user/dtos/request/user.update.request.dto';
 import { ENUM_APP_STATUS_CODE_ERROR } from 'src/app/enums/app.status-code.enum';
 import { DatabaseIdResponseDto } from 'src/common/database/dtos/response/database.id.response.dto';
-import { ENUM_EMAIL } from 'src/modules/email/enums/email.enum';
 import { Queue } from 'bullmq';
 import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
 import { WorkerQueue } from 'src/worker/decorators/worker.decorator';
@@ -96,6 +97,7 @@ export class UserAdminController {
         private readonly roleService: RoleService,
         private readonly authService: AuthService,
         private readonly userService: UserService,
+        private readonly meetingService: MeetingService,
         private readonly countryService: CountryService
     ) {}
 
@@ -241,21 +243,51 @@ export class UserAdminController {
                 { session }
             );
 
-            this.emailQueue.add(
-                ENUM_EMAIL.WELCOME_ADMIN,
-                {
-                    email: created.email,
-                    name: created.name,
-                    passwordExpiredAt: password.passwordExpired,
-                    password: passwordString,
-                },
-                {
-                    debounce: {
-                        id: `${ENUM_EMAIL.WELCOME_ADMIN}-${created._id}`,
-                        ttl: 1000,
-                    },
+            // region Create a Stream Account for Expert
+            if (checkRole.type === ENUM_POLICY_ROLE_TYPE.EXPERT) {
+                const meetingUser = await this.meetingService.createUser({
+                    id: created._id,
+                    role: ENUM_MEETING_USER_TYPE.USER,
+                });
+
+                if (!meetingUser || !meetingUser.users) {
+                    throw new InternalServerErrorException({
+                        statusCode:
+                            ENUM_USER_STATUS_CODE_ERROR.UNABLE_TO_CREATE_STREAM_USER,
+                        message: 'user.error.unableToCreateStreamUser',
+                    });
                 }
-            );
+
+                if (
+                    Object.values(meetingUser.users).some(
+                        streamUser => streamUser.id === created._id
+                    )
+                ) {
+                    await this.userService.updateStreamUserCreatedStatus(
+                        created,
+                        true,
+                        { session }
+                    );
+                }
+            }
+            // endregion
+
+            // @todo Uncomment this to enable sending welcome emails
+            // this.emailQueue.add(
+            //     ENUM_EMAIL.WELCOME_ADMIN,
+            //     {
+            //         email: created.email,
+            //         name: created.name,
+            //         passwordExpiredAt: password.passwordExpired,
+            //         password: passwordString,
+            //     },
+            //     {
+            //         debounce: {
+            //             id: `${ENUM_EMAIL.WELCOME_ADMIN}-${created._id}`,
+            //             ttl: 1000,
+            //         },
+            //     }
+            // );
 
             await session.commitTransaction();
             await session.endSession();

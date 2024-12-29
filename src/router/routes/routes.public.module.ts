@@ -6,6 +6,7 @@ import { CountryModule } from 'src/modules/country/country.module';
 import { EmailModule } from 'src/modules/email/email.module';
 import { ExpertPublicController } from 'src/modules/expert/controllers/expert.public.controller';
 import { HelloPublicController } from 'src/modules/hello/controllers/hello.public.controller';
+import { MeetingModule } from 'src/modules/meeting/meeting.module';
 import { RoleModule } from 'src/modules/role/role.module';
 import { SettingModule } from 'src/modules/setting/setting.module';
 import { UserModule } from 'src/modules/user/user.module';
@@ -27,6 +28,7 @@ import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
         RoleModule,
         EmailModule,
         CountryModule,
+        MeetingModule,
         BullModule.registerQueue({
             connection: {
                 name: WORKER_CONNECTION_NAME,

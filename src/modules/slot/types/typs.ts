@@ -3,7 +3,13 @@ export interface DateRangeWithTimezone {
     end: Date;
     userTimezone: string;
 }
-export interface DateRange {
+
+export interface DateRangeShort {
     start: Date;
     end: Date;
+}
+
+export interface DateRange {
+    startDate: Date;
+    endDate: Date;
 }

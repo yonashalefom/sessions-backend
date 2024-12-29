@@ -5,6 +5,7 @@ import { BookingUserController } from 'src/modules/booking/controllers/booking.u
 import { CategoryModule } from 'src/modules/category/category.module';
 import { EventModule } from 'src/modules/events/event.module';
 import { ExpertUserController } from 'src/modules/expert/controllers/expert.user.controller';
+import { MeetingModule } from 'src/modules/meeting/meeting.module';
 import { ScheduleModule } from 'src/modules/schedules/schedule.module';
 import { SlotModule } from 'src/modules/slot/slot.module';
 import { UserUserController } from 'src/modules/user/controllers/user.user.controller';
@@ -26,6 +27,7 @@ import { UserModule } from 'src/modules/user/user.module';
         EventModule,
         ScheduleModule,
         SlotModule,
+        MeetingModule,
     ],
 })
 export class RoutesUserModule {}

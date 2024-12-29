@@ -82,6 +82,13 @@ export class RoleService implements IRoleService {
         return this.roleRepository.findOne({ name }, options);
     }
 
+    async findOneByType(
+        type: string,
+        options?: IDatabaseOptions
+    ): Promise<RoleDoc> {
+        return this.roleRepository.findOne({ type }, options);
+    }
+
     async findOneActiveById(
         _id: string,
         options?: IDatabaseOptions

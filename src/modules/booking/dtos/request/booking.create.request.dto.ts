@@ -1,6 +1,6 @@
 import { BookingStatus } from 'src/modules/booking/repository/entities/booking.entity';
 
-type BookingType = 'INAPP_MEETING' | 'EXTERNAL_MEETING';
+export type BookingType = 'IN_APP_MEETING' | 'EXTERNAL_MEETING';
 
 export class BookingCreateRequestDto {
     userId: string;

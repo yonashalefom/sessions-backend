@@ -1,32 +1,9 @@
-import { MeetingStatus } from 'src/modules/meeting/repository/entities/meeting.entity';
-
-type MeetingType = 'INAPP_MEETING' | 'EXTERNAL_MEETING';
+import { CallType } from 'src/modules/meeting/repository/entities/meeting.entity';
 
 export class MeetingCreateRequestDto {
-    userId: string;
+    meetingId: string;
 
-    expertId: string;
+    type: CallType;
 
-    eventId: string;
-
-    description?: string;
-
-    startTime: Date;
-
-    endTime: Date;
-
-    location?: string;
-
-    bookingRefType?: MeetingType;
-
-    meetingUrl?: string;
-
-    meetingId?: string;
-
-    meetingPassword?: string;
-}
-
-export class CancelMeetingRequestDto {
-    status: MeetingStatus;
-    cancellationReason?: string;
+    createdBy: string;
 }

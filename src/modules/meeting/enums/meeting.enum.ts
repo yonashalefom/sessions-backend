@@ -1,6 +1,10 @@
-export enum ENUM_MEETING_REF_TYPE {
-    IN_APP_MEETING = 'IN_APP_MEETING',
-    EXTERNAL_MEETING = 'EXTERNAL_MEETING',
+export enum ENUM_MEETING_CALL_TYPE {
+    DEFAULT = 'default',
+}
+
+export enum ENUM_MEETING_USER_TYPE {
+    USER = 'user',
+    CALL_MEMBER = 'call_member',
 }
 
 export enum ENUM_MEETING_STATUS_TYPE {

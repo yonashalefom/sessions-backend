@@ -11,6 +11,7 @@
     "deleteSelf": "User deleted successfully.",
     "updateMobileNumber": "User update mobile number successfully.",
     "updateClaimUsername": "User claim username successfully.",
+    "unableToCreateStreamUser": "Unknown error occurred while registering a user. Please try again in a few minutes.",
     "error": {
         "mobileNumberExist": "Mobile number already exists.",
         "emailExist": "Email already exists.",

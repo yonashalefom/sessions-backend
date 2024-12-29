@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { Document } from 'mongoose';
 import { DatabaseQueryAnd } from 'src/common/database/decorators/database.decorator';
@@ -10,6 +10,7 @@ import {
     IDatabaseOptions,
     IDatabaseSaveOptions,
 } from 'src/common/database/interfaces/database.interface';
+import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
 import {
     BookingCreateRequestDto,
@@ -26,11 +27,17 @@ import {
     BookingEntity,
 } from 'src/modules/booking/repository/entities/booking.entity';
 import { BookingRepository } from 'src/modules/booking/repository/repositories/booking.repository';
+import { EventDoc } from 'src/modules/events/repository/entities/event.entity';
+import { SlotService } from 'src/modules/slot/services/slot.service';
+import { DateRange } from 'src/modules/slot/types/typs';
 
 @Injectable()
 export class BookingService implements IBookingService {
     constructor(
         private readonly bookingRepository: BookingRepository,
+        // @Inject(forwardRef(() => SlotService))
+        private readonly slotService: SlotService,
+        private readonly helperDateService: HelperDateService,
         private readonly helperURLService: HelperURLService
     ) {}
 
@@ -107,11 +114,14 @@ export class BookingService implements IBookingService {
 
     async create(
         {
-            startTime,
-            expertId,
-            endTime,
             eventId,
+            expertId,
+            startTime,
+            endTime,
             description,
+            bookingRefType,
+            meetingId,
+            meetingUrl,
         }: Partial<BookingCreateRequestDto>,
         userId: string,
         options?: IDatabaseCreateOptions
@@ -123,9 +133,11 @@ export class BookingService implements IBookingService {
         create.description = description;
         create.startTime = startTime;
         create.endTime = endTime;
-        // create.slug = this.helperURLService.slugify(title);
-        // create.price = price;
-        // create.duration = duration;
+        create.bookingRef = {
+            type: bookingRefType,
+            meetingId,
+            meetingUrl,
+        };
         create.isActive = true;
 
         return this.bookingRepository.create<BookingEntity>(create, options);
@@ -205,5 +217,84 @@ export class BookingService implements IBookingService {
 
         // Return only the IDs that exist
         return ids.filter(id => existingIds.includes(id));
+    }
+
+    validateAndGenerateDateRange(
+        startTime: Date,
+        eventDuration: number,
+        userTimezone: string
+    ): DateRange {
+        const startDate = this.helperDateService.create(
+            startTime,
+            undefined,
+            userTimezone
+        );
+        const endTime = this.helperDateService
+            .forwardInMinutes(
+                eventDuration,
+                { fromDate: startDate },
+                userTimezone
+            )
+            .toISOString();
+        const endDate = this.helperDateService.create(
+            endTime,
+            undefined,
+            userTimezone
+        );
+
+        const today = this.helperDateService.create(
+            undefined,
+            {
+                startOfDay: true,
+            },
+            userTimezone
+        );
+
+        if (
+            this.helperDateService.isBefore(startDate, today) ||
+            this.helperDateService.isBefore(endDate, today)
+        ) {
+            throw new BadRequestException(
+                'The date must be greater than or equal to today.'
+            );
+        }
+
+        if (this.helperDateService.isBefore(endDate, startDate)) {
+            throw new BadRequestException(
+                'endDate cannot be behind startDate.'
+            );
+        }
+
+        return { startDate, endDate };
+    }
+
+    async checkIfSlotIsBookableSlot(
+        eventDoc: EventDoc,
+        startDate: Date,
+        endDate: Date,
+        timezone: string
+    ): Promise<boolean> {
+        // Prepare the date range object
+        const dateRange = {
+            start: startDate,
+            end: endDate,
+            userTimezone: timezone, // Assuming 'user' is accessible in this context
+        };
+
+        // Fetch available slots
+        const availableSlots = await this.slotService.getAvailableSlots(
+            eventDoc as unknown as EventDoc,
+            dateRange
+        );
+
+        // Check if the provided date range is a valid slot
+        const isValidSlot = this.slotService.isValidSlot(
+            startDate.toISOString(),
+            endDate.toISOString(),
+            availableSlots
+        );
+
+        // Return the validation result
+        return isValidSlot;
     }
 }

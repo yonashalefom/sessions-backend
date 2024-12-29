@@ -4,22 +4,15 @@ import {
     DatabaseSchema,
 } from 'src/common/database/decorators/database.decorator';
 import { IDatabaseDocument } from 'src/common/database/interfaces/database.interface';
+import { BookingType } from 'src/modules/booking/dtos/request/booking.create.request.dto';
 
 @DatabaseEntity({ timestamps: false, _id: false })
 export class BookingReferenceEntity {
-    // @DatabaseProp({
-    //     required: true,
-    //     type: [Number],
-    //     enum: ENUM_SCHEDULE_DAYS,
-    //     default: [],
-    // })
-    // days: ENUM_SCHEDULE_DAYS[];
-
     @DatabaseProp({
         required: false,
         type: String,
     })
-    type?: string;
+    type?: BookingType;
 
     @DatabaseProp({
         required: false,
