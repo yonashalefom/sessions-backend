@@ -8,7 +8,7 @@ import {
     Post,
 } from '@nestjs/common';
 import { ENUM_BOOKING_REF_TYPE } from 'src/modules/booking/enums/booking.enum';
-import { IEventDoc } from 'src/modules/booking/interfaces/booking.interface';
+import { IEventDoc } from 'src/modules/events/interfaces/event.interface';
 import { EventParsePipe } from 'src/modules/events/pipes/event.parse.pipe';
 import { EventDoc } from 'src/modules/events/repository/entities/event.entity';
 import { ENUM_MEETING_CALL_TYPE } from 'src/modules/meeting/enums/meeting.enum';

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Model, PopulateOptions } from 'mongoose';
+import { Model } from 'mongoose';
 import { DatabaseRepositoryAbstract } from 'src/common/database/abstracts/database.repository.abstract';
 import { DatabaseModel } from 'src/common/database/decorators/database.decorator';
 import {
@@ -14,33 +14,6 @@ export class BookingRepository extends DatabaseRepositoryAbstract<
     BookingEntity,
     BookingDoc
 > {
-    readonly _joinActive: PopulateOptions[] = [
-        {
-            path: 'expertId',
-            localField: 'expertId',
-            foreignField: '_id',
-            model: UserEntity.name,
-            justOne: true,
-        },
-        {
-            path: 'userId',
-            localField: 'userId',
-            foreignField: '_id',
-            model: UserEntity.name,
-            justOne: true,
-        },
-        {
-            path: 'eventId',
-            localField: 'eventId',
-            foreignField: '_id',
-            model: EventEntity.name,
-            justOne: true,
-            match: {
-                isActive: true,
-            },
-        },
-    ];
-
     constructor(
         @DatabaseModel(BookingEntity.name)
         private readonly bookingModel: Model<BookingEntity>

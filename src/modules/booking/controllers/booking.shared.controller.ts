@@ -85,7 +85,7 @@ export class BookingSharedController {
         { _search, _limit, _offset, _order }: PaginationListDto,
         @PaginationQueryFilterInBoolean('isActive', BOOKING_DEFAULT_IS_ACTIVE)
         isActive: Record<string, any>,
-        @Query('active') active: string // Active filter query parameter
+        @Query('active') active: string
     ): Promise<IResponsePaging<BookingShortResponseDto>> {
         const find: Record<string, any> = {
             ..._search,
