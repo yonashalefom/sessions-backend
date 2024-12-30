@@ -3,9 +3,7 @@ import {
     Body,
     Controller,
     ForbiddenException,
-    Get,
     InternalServerErrorException,
-    NotFoundException,
     Param,
     Post,
 } from '@nestjs/common';
@@ -32,10 +30,7 @@ import { PaginationService } from 'src/common/pagination/services/pagination.ser
 import { AuthJwtAccessPayloadDto } from 'src/modules/auth/dtos/jwt/auth.jwt.access-payload.dto';
 import { CreateBookingValidation } from 'src/modules/booking/decorators/booking.common.decorator';
 import { BookingCreateRequestDto } from 'src/modules/booking/dtos/request/booking.create.request.dto';
-import { BookingShortResponseDto } from 'src/modules/booking/dtos/response/booking.get.response.dto';
 import { ENUM_BOOKING_STATUS_CODE_ERROR } from 'src/modules/booking/enums/booking.status-code.enum';
-import { BookingParsePipe } from 'src/modules/booking/pipes/booking.parse.pipe';
-import { BookingDoc } from 'src/modules/booking/repository/entities/booking.entity';
 import { BookingService } from 'src/modules/booking/services/booking.service';
 import { EventService } from 'src/modules/events/services/event.service';
 import { MeetingService } from 'src/modules/meeting/services/meeting.service';
@@ -52,7 +47,6 @@ import { Response } from 'src/common/response/decorators/response.decorator';
 import { IResponse } from 'src/common/response/interfaces/response.interface';
 import { ScheduleService } from 'src/modules/schedules/services/schedule.service';
 import { SlotService } from 'src/modules/slot/services/slot.service';
-import { UserGetResponseDto } from 'src/modules/user/dtos/response/user.get.response.dto';
 import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
 import { UserActiveParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 
@@ -201,35 +195,5 @@ export class BookingUserController {
         }
     }
 
-    // endregion
-
-    // region Get Booking Details By Id
-    @Response('booking.get')
-    @PolicyAbilityProtected({
-        subject: ENUM_POLICY_SUBJECT.BOOKING,
-        action: [ENUM_POLICY_ACTION.READ],
-    })
-    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
-    @AuthJwtAccessProtected()
-    @Get('/get/:bookingId')
-    async get(
-        @Param('bookingId', RequestRequiredPipe, BookingParsePipe)
-        booking: BookingDoc,
-        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserActiveParsePipe)
-        user: IUserDoc
-    ): Promise<IResponse<BookingShortResponseDto>> {
-        if (
-            (booking.userId as unknown as UserGetResponseDto)._id !== user._id
-        ) {
-            throw new NotFoundException({
-                statusCode: ENUM_BOOKING_STATUS_CODE_ERROR.NOT_FOUND,
-                message: 'booking.error.notFound',
-            });
-        }
-
-        const mapped: BookingShortResponseDto =
-            await this.bookingService.mapGetShort(booking);
-        return { data: mapped };
-    }
     // endregion
 }
