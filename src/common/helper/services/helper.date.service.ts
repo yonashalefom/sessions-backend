@@ -80,7 +80,29 @@ export class HelperDateService implements IHelperDateService {
             mDate.startOf('day');
         }
 
+        if (options?.endOfDay) {
+            mDate.endOf('day');
+        }
+
         return mDate.toDate();
+    }
+
+    createMomentDate(
+        date?: string | number | Date,
+        options?: IHelperDateCreateOptions,
+        tz = this.defTz
+    ) {
+        const mDate = moment(date ?? undefined).tz(tz);
+
+        if (options?.startOfDay) {
+            mDate.startOf('day');
+        }
+
+        if (options?.endOfDay) {
+            mDate.endOf('day');
+        }
+
+        return mDate;
     }
 
     createTimestamp(

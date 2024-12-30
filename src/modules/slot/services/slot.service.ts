@@ -1,4 +1,9 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+    BadRequestException,
+    forwardRef,
+    Inject,
+    Injectable,
+} from '@nestjs/common';
 import moment from 'moment-timezone';
 import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
@@ -9,8 +14,9 @@ import { EventService } from 'src/modules/events/services/event.service';
 import { ScheduleAvailabilityEntity } from 'src/modules/schedules/repository/entities/schedule.availability.entity';
 import { ScheduleService } from 'src/modules/schedules/services/schedule.service';
 import { SlotDto } from 'src/modules/slot/dtos/response/slot.get.response.dto';
+import { ENUM_SLOT_STATUS_CODE_ERROR } from 'src/modules/slot/enums/slot.status-code.enum';
 import { ISlotService } from 'src/modules/slot/interfaces/slot.service.interface';
-import { DateRangeWithTimezone } from 'src/modules/slot/types/typs';
+import { DateRange, DateRangeWithTimezone } from 'src/modules/slot/types/typs';
 
 @Injectable()
 export class SlotService implements ISlotService {
@@ -22,6 +28,47 @@ export class SlotService implements ISlotService {
         private readonly helperDateService: HelperDateService,
         private readonly helperURLService: HelperURLService
     ) {}
+
+    // region Check If Requested Date Range Is Valid
+    validateDateRange(userTimezone: string, start: Date, end: Date): DateRange {
+        const today = this.helperDateService.create(
+            undefined,
+            {
+                startOfDay: true,
+            },
+            userTimezone
+        );
+        const startDate = this.helperDateService.create(
+            start,
+            undefined,
+            userTimezone
+        );
+        const endDate = this.helperDateService.create(
+            end,
+            undefined,
+            userTimezone
+        );
+
+        if (
+            this.helperDateService.isBefore(startDate, today) ||
+            this.helperDateService.isBefore(endDate, today)
+        ) {
+            throw new BadRequestException({
+                statusCode: ENUM_SLOT_STATUS_CODE_ERROR.DATE_LESS_THAN_TODAY,
+                message: 'slot.error.dateLessThanToday',
+            });
+        }
+
+        if (this.helperDateService.isBefore(endDate, startDate)) {
+            throw new BadRequestException({
+                statusCode:
+                    ENUM_SLOT_STATUS_CODE_ERROR.END_DATE_LESS_THAN_START_DATE,
+                message: 'slot.error.endDateLessThanStartDate',
+            });
+        }
+        return { startDate, endDate };
+    }
+    // endregion
 
     // region Get Available Slots
     async getAvailableSlots(
@@ -47,13 +94,13 @@ export class SlotService implements ISlotService {
             }
         }
 
-        // Fetch all active bookings for the expert
+        // Fetch all active bookings of the expert
         const bookings = await this.bookingService.findAll({
             expertId: expertEvent.owner,
             isActive: true,
         });
 
-        // Filter slots to find available ones
+        // Filter slots that doesn't conflict with already booked slots
         let availableSlotsFiltered = availableSlots;
         if (bookings.length > 0) {
             availableSlotsFiltered = availableSlots.filter(slot => {
@@ -107,6 +154,7 @@ export class SlotService implements ISlotService {
 
     // endregion
 
+    // region Check if Slot is Available
     private isSlotAvailable(
         slotStart: moment.Moment,
         slotEnd: moment.Moment,
@@ -122,6 +170,7 @@ export class SlotService implements ISlotService {
             );
         });
     }
+    // endregion
 
     // region Generate Time Slots for an Event
     private async generateEventSlots(
@@ -130,51 +179,52 @@ export class SlotService implements ISlotService {
         scheduleTimeZone: string,
         expertEvent: EventDoc
     ): Promise<string[]> {
-        const { days, startTime, endTime } = expertAvailability;
+        const {
+            days: expertAvailDays,
+            startTime: expertAvailStartTime,
+            endTime: expertAvailEndTime,
+        } = expertAvailability;
 
         const availableSlots = [];
 
-        const startDateByUserTimezone = moment(dateRange.start)
-            .tz(dateRange.userTimezone)
-            .startOf('day');
-        const endDateByUserTimezone = moment(dateRange.end)
-            .tz(dateRange.userTimezone)
-            .endOf('day');
+        const startDateByUserTz = this.helperDateService.createMomentDate(
+            dateRange.start,
+            {
+                startOfDay: true,
+            },
+            dateRange.userTimezone
+        );
+        const endDateByUserTz = this.helperDateService.createMomentDate(
+            dateRange.end,
+            {
+                endOfDay: true,
+            },
+            dateRange.userTimezone
+        );
 
-        const currentTime = moment().tz(scheduleTimeZone);
-
-        while (startDateByUserTimezone.isBefore(endDateByUserTimezone)) {
-            if (days.includes(startDateByUserTimezone.isoWeekday())) {
+        const currentTimeByUserTz = moment().tz(dateRange.userTimezone);
+        while (startDateByUserTz.isBefore(endDateByUserTz)) {
+            // Map ISO weekday number to day names
+            if (expertAvailDays.includes(startDateByUserTz.isoWeekday())) {
                 const slots = this.splitTimeIntoIntervals(
-                    startDateByUserTimezone.format('YYYY-MM-DD'),
-                    startTime,
-                    endTime,
+                    startDateByUserTz.format('YYYY-MM-DD'),
+                    expertAvailStartTime,
+                    expertAvailEndTime,
                     expertEvent.duration,
                     scheduleTimeZone
                 );
 
                 for (const slot of slots) {
-                    const adjustedSlotStart = moment(slot).add(
-                        expertEvent.bookingOffsetMinutes,
-                        'minutes'
-                    );
-
-                    // if (!this.isSlotConflicted(adjustedSlotStart, expertEvent)) {
-                    if (
-                        adjustedSlotStart.isAfter(currentTime)
-                        // &&
-                        // !(await this.isSlotConflicted(
-                        //     adjustedSlotStart,
-                        //     expertEvent
-                        // ))
-                    ) {
+                    const adjustedSlotStart = moment(slot)
+                        .tz(dateRange.userTimezone)
+                        .add(expertEvent.bookingOffsetMinutes, 'minutes');
+                    if (adjustedSlotStart.isAfter(currentTimeByUserTz)) {
                         availableSlots.push(adjustedSlotStart.toISOString());
                     }
-                    // }
                 }
             }
 
-            startDateByUserTimezone.add(1, 'day');
+            startDateByUserTz.tz(dateRange.userTimezone).add(1, 'day');
         }
 
         return availableSlots;
@@ -184,18 +234,18 @@ export class SlotService implements ISlotService {
 
     // region Split Expert Availability Time Into Intervals
     private splitTimeIntoIntervals(
-        date: string,
-        availStartTime: string,
-        availEndTime: string,
+        currentDate: string,
+        expertAvailStartTime: string,
+        expertAvailEndTime: string,
         eventDuration: number,
         scheduleTimeZone: string
     ): string[] {
         const availStartTimeTZ = moment.tz(
-            `${date}T${availStartTime}`,
+            `${currentDate}T${expertAvailStartTime}`,
             scheduleTimeZone
         );
         const availEndTimeTZ = moment.tz(
-            `${date}T${availEndTime}`,
+            `${currentDate}T${expertAvailEndTime}`,
             scheduleTimeZone
         );
 
@@ -203,31 +253,13 @@ export class SlotService implements ISlotService {
 
         while (availStartTimeTZ.isBefore(availEndTimeTZ)) {
             intervals.push(availStartTimeTZ.utc().toISOString());
+
             availStartTimeTZ.add(eventDuration, 'minutes');
         }
 
         return intervals;
     }
-
     // endregion
-
-    // region Check For Slot Conflict
-    private async isSlotConflicted(
-        adjustedSlotStart: moment.Moment,
-        event: EventDoc
-    ): Promise<boolean> {
-        // Fetch active bookings for the expert
-        const activeBookings = await this.bookingService.findAll({
-            expertId: event.owner,
-            isActive: true,
-            startTime: { $lte: adjustedSlotStart.toDate() },
-            endTime: { $gte: adjustedSlotStart.toDate() },
-        });
-
-        // Check if the slot overlaps with any active booking
-        console.log('Conflicted Slots: ' + activeBookings.length);
-        return activeBookings.length > 0;
-    }
 
     // region Group Slots By Date
     private groupSlotsByDate(
@@ -244,9 +276,9 @@ export class SlotService implements ISlotService {
             }
 
             groupedSlots[dateKey].push({
-                time: slot,
+                time: moment(slot).tz(userTimezone).toISOString(),
                 timezone: userTimezone,
-                startTime: slot,
+                startTime: moment(slot).tz(userTimezone).toISOString(),
                 endTime: moment(slot)
                     .tz(userTimezone)
                     .add(eventDuration, 'minutes')

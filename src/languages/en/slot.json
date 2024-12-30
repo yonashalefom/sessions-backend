@@ -1,0 +1,19 @@
+{
+    "list": "List of slots retrieved successfully.",
+    "get": "Slot details fetched successfully.",
+    "create": "New slot created successfully.",
+    "inactive": "Slot marked as inactive.",
+    "active": "Slot marked as active.",
+    "blocked": "Slot blocked successfully.",
+    "error": {
+        "dateLessThanToday": "Slot start and end dates must be greater than or equal to today.",
+        "endDateLessThanStartDate": "endDate cannot be behind startDate.",
+        "titleExist": "Schedule with similar title already exists.",
+        "blocked": "Schedule is blocked.",
+        "deleted": "Schedule has been deleted.",
+        "inactive": "Schedule is inactive.",
+        "blockedInvalid": "Invalid blocked status.",
+        "notFound": "Schedule not found.",
+        "statusInvalid": "Invalid schedule status."
+    }
+}
