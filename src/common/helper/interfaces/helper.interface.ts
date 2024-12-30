@@ -42,6 +42,7 @@ export interface IHelperDateDiffOptions {
 
 export interface IHelperDateCreateOptions {
     startOfDay?: boolean;
+    endOfDay?: boolean;
 }
 
 export interface IHelperDateFormatOptions {

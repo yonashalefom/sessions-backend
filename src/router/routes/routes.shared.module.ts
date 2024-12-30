@@ -11,7 +11,6 @@ import { EventSharedController } from 'src/modules/events/controllers/event.shar
 import { EventModule } from 'src/modules/events/event.module';
 import { ScheduleSharedController } from 'src/modules/schedules/controllers/schedule.shared.controller';
 import { ScheduleModule } from 'src/modules/schedules/schedule.module';
-import { SlotSharedController } from 'src/modules/slot/controllers/slot.shared.controller';
 import { SlotModule } from 'src/modules/slot/slot.module';
 import { UserSharedController } from 'src/modules/user/controllers/user.shared.controller';
 import { UserModule } from 'src/modules/user/user.module';
@@ -25,7 +24,6 @@ import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
         CategorySharedController,
         EventSharedController,
         ScheduleSharedController,
-        SlotSharedController,
     ],
     providers: [],
     exports: [],

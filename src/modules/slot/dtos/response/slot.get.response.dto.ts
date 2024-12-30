@@ -4,7 +4,3 @@ export class SlotDto {
     startTime: string;
     endTime: string;
 }
-
-export class SlotsResponseDto {
-    slots: Record<string, SlotDto[]>;
-}
