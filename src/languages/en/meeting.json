@@ -6,6 +6,7 @@
     "deleteCall": "Calls deleted successfully.",
     "getAsyncTaskStats": "Async Task stats retrieved successfully.",
     "getStreamUserInfo": "User info retrieved successfully.",
+    "getStreamCallInfo": "Call info retrieved successfully.",
     "inactive": "Booking marked as inactive.",
     "active": "Booking marked as active.",
     "blocked": "Booking blocked successfully.",
