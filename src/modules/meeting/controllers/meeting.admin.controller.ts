@@ -4,6 +4,7 @@ import {
     DeleteUsersRequest,
     DeleteUsersResponse,
     GetRateLimitsResponse,
+    QueryCallsRequest,
     QueryUsersResponse,
 } from '@stream-io/node-sdk';
 import { StreamResponse } from '@stream-io/node-sdk/dist/src/types';
@@ -109,6 +110,27 @@ export class MeetingAdminController {
         const userInfo = await this.meetingService.getMeetingUserInfo(userId);
 
         return { data: userInfo };
+    }
+
+    // endregion
+
+    // region Get Meeting Call Info By Id
+    @Response('meeting.getStreamCallInfo')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.MEETING_CALL,
+        action: [ENUM_POLICY_ACTION.READ],
+    })
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @AuthJwtAccessProtected()
+    @ApiKeyProtected()
+    @Get('/get/call/:callId')
+    async getMeetingCallInfo(
+        @Param('callId', RequestRequiredPipe)
+        callId: string
+    ): Promise<IResponse<QueryCallsRequest>> {
+        const callInfo = await this.meetingService.getMeetingCallInfo(callId);
+
+        return { data: callInfo };
     }
 
     // endregion

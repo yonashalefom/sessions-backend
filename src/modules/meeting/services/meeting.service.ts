@@ -316,27 +316,21 @@ export class MeetingService implements IMeetingService {
 
     // region Get Meeting User Info By Id
     async getMeetingUserInfo(userId: string) {
-        // return await this.client.getTask({ id: taskId });
-        try {
-            const d = await this.client.queryUsers({
-                payload: {
-                    filter_conditions: {
-                        id: userId,
-                    },
-                },
-            });
-            console.log('Data is: ');
-            console.log(JSON.stringify(d, null, 2));
-        } catch (e) {
-            console.log('Error is: ');
-            console.log(JSON.stringify(e, null, 2));
-        }
-
         return await this.client.queryUsers({
             payload: {
                 filter_conditions: {
                     id: userId,
                 },
+            },
+        });
+    }
+    // endregion
+
+    // region Get Meeting Call Info By Id
+    async getMeetingCallInfo(callId: string) {
+        return await this.client.video.queryCalls({
+            filter_conditions: {
+                id: callId,
             },
         });
     }
