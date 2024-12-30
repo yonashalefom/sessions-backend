@@ -7,7 +7,7 @@
     "active": "Booking marked as active.",
     "blocked": "Booking blocked successfully.",
     "error": {
-        "eventExist": "Booking already exists.",
+        "bookingExist": "Booking already exists.",
         "blocked": "Booking is blocked.",
         "deleted": "Booking has been deleted.",
         "inactive": "Booking is inactive.",

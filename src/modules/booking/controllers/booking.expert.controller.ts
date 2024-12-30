@@ -5,35 +5,18 @@ import {
     NotFoundException,
     Param,
     Put,
-    Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import moment from 'moment-timezone';
-import {
-    PaginationQuery,
-    PaginationQueryFilterInBoolean,
-} from 'src/common/pagination/decorators/pagination.decorator';
-import { PaginationListDto } from 'src/common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from 'src/common/pagination/services/pagination.service';
 import { RequestRequiredPipe } from 'src/common/request/pipes/request.required.pipe';
-import {
-    Response,
-    ResponsePaging,
-} from 'src/common/response/decorators/response.decorator';
-import {
-    IResponse,
-    IResponsePaging,
-} from 'src/common/response/interfaces/response.interface';
+import { Response } from 'src/common/response/decorators/response.decorator';
+import { IResponse } from 'src/common/response/interfaces/response.interface';
 import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
 import {
     AuthJwtAccessProtected,
     AuthJwtPayload,
 } from 'src/modules/auth/decorators/auth.jwt.decorator';
 import { AuthJwtAccessPayloadDto } from 'src/modules/auth/dtos/jwt/auth.jwt.access-payload.dto';
-import {
-    BOOKING_DEFAULT_AVAILABLE_SEARCH,
-    BOOKING_DEFAULT_IS_ACTIVE,
-} from 'src/modules/booking/constants/booking.list.constant';
 import { CancelBookingValidation } from 'src/modules/booking/decorators/booking.common.decorator';
 import { CancelBookingRequestDto } from 'src/modules/booking/dtos/request/booking.create.request.dto';
 import { BookingShortResponseDto } from 'src/modules/booking/dtos/response/booking.get.response.dto';
@@ -72,76 +55,13 @@ export class BookingExpertController {
         private readonly paginationService: PaginationService
     ) {}
 
-    // region Get Expert Bookings
-    @ResponsePaging('booking.list')
-    @PolicyAbilityProtected({
-        subject: ENUM_POLICY_SUBJECT.BOOKING,
-        action: [ENUM_POLICY_ACTION.READ],
-    })
-    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.EXPERT)
-    @AuthJwtAccessProtected()
-    @ApiKeyProtected()
-    @Get('/get/all')
-    async list(
-        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserActiveParsePipe)
-        user: IUserDoc,
-        @PaginationQuery({
-            availableSearch: BOOKING_DEFAULT_AVAILABLE_SEARCH,
-        })
-        { _search, _limit, _offset, _order }: PaginationListDto,
-        @PaginationQueryFilterInBoolean('isActive', BOOKING_DEFAULT_IS_ACTIVE)
-        isActive: Record<string, any>,
-        @Query('active') active: string // Active filter query parameter
-    ): Promise<IResponsePaging<BookingShortResponseDto>> {
-        const find: Record<string, any> = {
-            ..._search,
-            ...isActive,
-            expertId: user._id,
-        };
-
-        // Add active filter if the query parameter is provided
-        if (active === 'true') {
-            find.startTime = {
-                $gte: moment().tz(user.country.timeZone).toDate(),
-            };
-        }
-
-        const bookings: BookingDoc[] = await this.bookingService.findAll(find, {
-            paging: {
-                limit: _limit,
-                offset: _offset,
-            },
-            order: _order,
-            join: true,
-        });
-
-        const total: number = await this.eventService.getTotal(find);
-        const totalPage: number = this.paginationService.totalPage(
-            total,
-            _limit
-        );
-
-        const mapped: BookingShortResponseDto[] =
-            await this.bookingService.mapShort(bookings);
-
-        return {
-            _pagination: { total, totalPage },
-            data: mapped,
-        };
-    }
-
-    // endregion
-
     // region Get Booking Details By Id
     @Response('booking.get')
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.BOOKING,
         action: [ENUM_POLICY_ACTION.READ],
     })
-    @PolicyRoleProtected(
-        ENUM_POLICY_ROLE_TYPE.EXPERT,
-        ENUM_POLICY_ROLE_TYPE.USER
-    )
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.EXPERT)
     @AuthJwtAccessProtected()
     @Get('/get/:bookingId')
     async get(
