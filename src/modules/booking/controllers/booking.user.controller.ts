@@ -105,6 +105,10 @@ export class BookingUserController {
             );
         // endregion
 
+        console.log('Trying to Book Slot: ');
+        console.log('startDate: ', startDate);
+        console.log('endDate: ', endDate);
+
         // region Check if the Provided Date Range is a Valid and Bookable Slot
         const isValidSlot = await this.bookingService.checkIfSlotIsBookableSlot(
             eventDoc as unknown as EventDoc,
@@ -114,9 +118,10 @@ export class BookingUserController {
         );
 
         if (!isValidSlot) {
-            throw new BadRequestException(
-                'The requested time is not a valid slot.'
-            );
+            throw new BadRequestException({
+                statusCode: ENUM_BOOKING_STATUS_CODE_ERROR.INVALID_SLOT,
+                message: 'booking.error.invalidSlot',
+            });
         }
         // endregion
 
@@ -139,7 +144,7 @@ export class BookingUserController {
                 session,
             });
 
-            const meetingCall = this.meetingService.createDefaultCall(
+            const meetingCall = await this.meetingService.createDefaultCall(
                 meetingId,
                 eventDoc.owner._id,
                 user._id,

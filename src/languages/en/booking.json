@@ -8,6 +8,7 @@
     "blocked": "Booking blocked successfully.",
     "error": {
         "bookingExist": "Booking already exists.",
+        "invalidSlot": "The requested time is not a valid or bookable slot.",
         "blocked": "Booking is blocked.",
         "deleted": "Booking has been deleted.",
         "inactive": "Booking is inactive.",

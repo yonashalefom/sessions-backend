@@ -252,7 +252,7 @@ export class MeetingService implements IMeetingService {
                     role: ENUM_MEETING_USER_TYPE.USER,
                 },
                 {
-                    user_id: roomOwnerId,
+                    user_id: guestId,
                     role: ENUM_MEETING_USER_TYPE.CALL_MEMBER,
                 },
             ],
@@ -262,16 +262,11 @@ export class MeetingService implements IMeetingService {
                     max_duration_seconds: duration * 60,
                 },
             },
-            custom: {
-                description,
-            },
         };
 
-        // if (description?.length) {
-        //     callData.custom = {
-        //         description: description,
-        //     };
-        // }
+        if (description) {
+            callData.custom = { description };
+        }
 
         return await this.createCall(
             ENUM_MEETING_CALL_TYPE.DEFAULT,
