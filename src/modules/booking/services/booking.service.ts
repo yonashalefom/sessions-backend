@@ -29,7 +29,7 @@ import {
 import { BookingRepository } from 'src/modules/booking/repository/repositories/booking.repository';
 import { EventDoc } from 'src/modules/events/repository/entities/event.entity';
 import { SlotService } from 'src/modules/slot/services/slot.service';
-import { DateRange } from 'src/modules/slot/types/typs';
+import { DateRange } from 'src/modules/slot/types/types';
 
 @Injectable()
 export class BookingService implements IBookingService {

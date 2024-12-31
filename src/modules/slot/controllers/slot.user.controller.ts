@@ -24,7 +24,7 @@ import { ScheduleService } from 'src/modules/schedules/services/schedule.service
 import { SlotDto } from 'src/modules/slot/dtos/response/slot.get.response.dto';
 import { DateParsePipe } from 'src/modules/slot/pipes/date.parse.pipe';
 import { SlotService } from 'src/modules/slot/services/slot.service';
-import { DateRangeWithTimezone } from 'src/modules/slot/types/typs';
+import { DateRangeWithTimezone } from 'src/modules/slot/types/types';
 import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
 import { UserActiveParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 

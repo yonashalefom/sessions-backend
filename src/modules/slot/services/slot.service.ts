@@ -16,7 +16,7 @@ import { ScheduleService } from 'src/modules/schedules/services/schedule.service
 import { SlotDto } from 'src/modules/slot/dtos/response/slot.get.response.dto';
 import { ENUM_SLOT_STATUS_CODE_ERROR } from 'src/modules/slot/enums/slot.status-code.enum';
 import { ISlotService } from 'src/modules/slot/interfaces/slot.service.interface';
-import { DateRange, DateRangeWithTimezone } from 'src/modules/slot/types/typs';
+import { DateRange, DateRangeWithTimezone } from 'src/modules/slot/types/types';
 
 @Injectable()
 export class SlotService implements ISlotService {
