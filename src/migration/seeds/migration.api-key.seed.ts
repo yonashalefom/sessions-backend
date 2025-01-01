@@ -14,8 +14,8 @@ export class MigrationApiKeySeed {
     })
     async seeds(): Promise<void> {
         try {
-            const apiKeyDefaultKey = 'development_PcEBjox1JDUwnaJ8BjtHPlZYY';
-            const apiKeyDefaultSecret = 'FVTiMyN89dbmiMwjPrzH7fCLGqClAuO9NRn';
+            const apiKeyDefaultKey = process.env.DEFAULT_API_KEY;
+            const apiKeyDefaultSecret = process.env.DEFAULT_API_SECRET;
             await this.apiKeyService.createRaw({
                 name: 'Sample Api Key - Default',
                 type: ENUM_API_KEY_TYPE.DEFAULT,
@@ -23,8 +23,8 @@ export class MigrationApiKeySeed {
                 secret: apiKeyDefaultSecret,
             });
 
-            const apiKeyPrivateKey = 'development_QBwDwg7JP284datxZUi9Kpmxa';
-            const apiKeyPrivateSecret = 'abWpZuIiSr3NKjzqvzU1VNkZmSnSL2dnDWQ';
+            const apiKeyPrivateKey = process.env.PRIVATE_API_KEY;
+            const apiKeyPrivateSecret = process.env.PRIVATE_API_SECRET;
             await this.apiKeyService.createRaw({
                 name: 'Sample Api Key - System',
                 type: ENUM_API_KEY_TYPE.SYSTEM,

@@ -53,5 +53,5 @@ export class DatabaseDto {
 
     @ApiHideProperty()
     @Exclude()
-    __v: string;
+    __v?: number;
 }

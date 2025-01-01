@@ -75,7 +75,7 @@ export class CategoryGetResponseDto extends DatabaseDto {
         required: false,
     })
     @Exclude()
-    __v: string;
+    __v: number;
 
     @ApiHideProperty()
     @ApiProperty({
@@ -109,5 +109,5 @@ export class CategoryGetShortResponseDto extends OmitType(
     isActive: boolean;
 
     @Exclude()
-    __v: boolean;
+    __v: number;
 }
