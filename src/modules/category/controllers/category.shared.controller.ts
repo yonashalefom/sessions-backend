@@ -58,7 +58,7 @@ export class CategorySharedController {
         subject: ENUM_POLICY_SUBJECT.CATEGORY,
         action: [ENUM_POLICY_ACTION.READ],
     })
-    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('/list')

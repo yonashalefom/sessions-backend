@@ -74,12 +74,11 @@ export class AuthPublicController {
     async loginWithCredential(
         @Body() { email, password }: AuthLoginRequestDto
     ): Promise<IResponse<AuthLoginResponseDto>> {
-        console.log(email);
         let user: UserDoc = await this.userService.findOneByEmail(email);
         if (!user) {
             throw new NotFoundException({
                 statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
-                message: 'user.error.notFound',
+                message: 'auth.error.credentialError',
             });
         }
 
@@ -102,8 +101,8 @@ export class AuthPublicController {
             user = await this.userService.increasePasswordAttempt(user);
 
             throw new BadRequestException({
-                statusCode: ENUM_USER_STATUS_CODE_ERROR.PASSWORD_NOT_MATCH,
-                message: 'auth.error.passwordNotMatch',
+                statusCode: ENUM_USER_STATUS_CODE_ERROR.WRONG_CREDENTIAL,
+                message: 'auth.error.credentialError',
                 data: {
                     attempt: user.passwordAttempt,
                 },
