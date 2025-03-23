@@ -39,6 +39,7 @@ import {
     ENUM_POLICY_ROLE_TYPE,
     ENUM_POLICY_SUBJECT,
 } from 'src/modules/policy/enums/policy.enum';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 
 @ApiTags('modules.shared.user')
 @Controller({
@@ -59,6 +60,7 @@ export class CategorySharedController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('/list')
@@ -110,6 +112,7 @@ export class CategorySharedController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @Get('/get/:category')
     async get(

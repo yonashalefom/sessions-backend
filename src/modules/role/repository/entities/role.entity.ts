@@ -1,4 +1,4 @@
-import { DatabaseEntityAbstract } from 'src/common/database/abstracts/database.entity.abstract';
+import { DatabaseEntityBase } from 'src/common/database/bases/database.entity';
 import {
     DatabaseEntity,
     DatabaseProp,
@@ -14,7 +14,7 @@ import {
 export const RoleTableName = 'Roles';
 
 @DatabaseEntity({ collection: RoleTableName })
-export class RoleEntity extends DatabaseEntityAbstract {
+export class RoleEntity extends DatabaseEntityBase {
     @DatabaseProp({
         required: true,
         index: true,
@@ -29,6 +29,7 @@ export class RoleEntity extends DatabaseEntityAbstract {
         required: false,
         trim: true,
         type: String,
+        maxlength: 500,
     })
     description?: string;
 

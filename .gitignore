@@ -1,11 +1,9 @@
-# IntelliJ
-out/
-
 # compiled output
 /dist
 /node_modules
 .warmup/
 swagger.json
+/src/metadata.ts
 
 # Logs
 logs
@@ -24,26 +22,12 @@ lerna-debug.log*
 
 # IDEs and editors
 /.idea
-/.awcache
-/.devcontainer
 .project
 .classpath
 .c9/
 *.launch
 .settings/
 *.sublime-workspace
-*.code-workspace
-
-# Vim
-[._]*.s[a-v][a-z]
-[._]*.sw[a-p]
-[._]s[a-rt-v][a-z]
-[._]ss[a-gi-z]
-[._]sw[a-p]
-
-# bundle
-packages/**/*.d.ts
-packages/**/*.js
 
 # IDE - VSCode
 .vscode/*
@@ -68,15 +52,4 @@ packages/**/*.js
 config.yaml
 config.yml
 
-# eslint
-.eslintcache
-
-# misc
-lerna-debug.log
-npm-debug.log
-yarn-error.log
-/**/npm-debug.log
-/packages/**/.npmignore
-/packages/**/LICENSE
-*.tsbuildinfo
-.npmrc
+swagger.json

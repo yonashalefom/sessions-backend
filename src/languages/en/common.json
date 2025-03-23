@@ -1,7 +1,0 @@
-{
-    "error": {
-        "date": {
-            "dateLessThanToday": "The date must be greater than or equal to today."
-        }
-    }
-}

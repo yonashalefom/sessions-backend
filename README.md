@@ -5,24 +5,24 @@
 ## Table of contents
 
 - [Sessions](#sessions---one-on-one-video-consultation-platform-)
-    - [Table of contents](#table-of-contents)
-    - [Project Overview](#project-overview)
-    - [Core Features](#core-features)
-        - [User Registration and Profiles](#1-user-registration-and-profiles)
-        - [Expert Registration and Profiles](#2-expert-registration-and-profiles)
-        - [Session Booking](#3-session-booking)
-        - [Session Management](#4-session-management)
-        - [Payment System](#5-payment-system)
-        - [Feedback and Ratings](#6-feedback-and-ratings)
-    - [Todo](#todo)
-    - [Installation](#installation)
-        - [Clone Repo](#clone-repo)
-        - [Install Dependencies](#install-dependencies)
-        - [Create environment](#create-environment)
-        - [Run Project](#run-project)
-    - [License](#license)
-    - [Contribute](#contribute)
-    - [Contact](#contact)
+  - [Table of contents](#table-of-contents)
+  - [Project Overview](#project-overview)
+  - [Core Features](#core-features)
+    - [User Registration and Profiles](#1-user-registration-and-profiles)
+    - [Expert Registration and Profiles](#2-expert-registration-and-profiles)
+    - [Session Booking](#3-session-booking)
+    - [Session Management](#4-session-management)
+    - [Payment System](#5-payment-system)
+    - [Feedback and Ratings](#6-feedback-and-ratings)
+  - [Todo](#todo)
+  - [Installation](#installation)
+    - [Clone Repo](#clone-repo)
+    - [Install Dependencies](#install-dependencies)
+    - [Create environment](#create-environment)
+    - [Run Project](#run-project)
+  - [License](#license)
+  - [Contribute](#contribute)
+  - [Contact](#contact)
 
 ## Project Overview
 
@@ -82,7 +82,7 @@ purposes, offering insights into the development of a production-ready, enterpri
 Clone the project with git.
 
 ```bash
-git clone https://github.com/Yon12853/sessions-backend.git
+git clone https://github.com/yonashalefom/sessions-backend.git
 ```
 
 ### Install Dependencies
@@ -124,7 +124,7 @@ How to contribute in this repo
 4. Push your changes to your remote branch `git push origin feature-branch-name`
 5. Create a Pull Request.
 
-Please ensure your code adheres to the project's coding standards and is well-documented. 
+Please ensure your code adheres to the project's coding standards and is well-documented.
 
 **Note:** If your code is behind the `original/main` branch, please update your code and resolve any conflicts.
 
@@ -146,11 +146,11 @@ Please ensure your code adheres to the project's coding standards and is well-do
 
 [author-email]: mailto:contact@yonashalefom.com
 
-[author-github]: https://github.com/Yon12853
+[author-github]: https://github.com/yonashalefom
 
 <!-- Repository Links -->
 
-[sessions-issues]: https://github.com/Yon12853/sessions-backend/issues
+[sessions-issues]: https://github.com/yonashalefom/sessions-backend/issues
 
 <!-- License -->
 

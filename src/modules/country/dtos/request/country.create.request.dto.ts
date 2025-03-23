@@ -5,7 +5,6 @@ import {
     ArrayNotEmpty,
     IsArray,
     IsNotEmpty,
-    IsOptional,
     IsString,
     MaxLength,
     MinLength,
@@ -28,7 +27,6 @@ export class CountryCreateRequestDto {
 
     @ApiProperty({
         required: true,
-        type: String,
         description: 'Country code, Alpha 2 code version',
         example: faker.location.countryCode('alpha-2'),
         maxLength: 2,
@@ -58,7 +56,6 @@ export class CountryCreateRequestDto {
 
     @ApiProperty({
         required: true,
-        type: String,
         description: 'Country code, Numeric code version',
         example: faker.location.countryCode('numeric'),
         maxLength: 3,
@@ -117,11 +114,10 @@ export class CountryCreateRequestDto {
     timeZone: string;
 
     @ApiProperty({
-        required: false,
-        description: 'Top level domain',
-        example: faker.internet.domainSuffix(),
+        required: true,
+        example: faker.finance.currency(),
     })
-    @IsOptional()
+    @IsNotEmpty()
     @IsString()
-    domain?: string;
+    currency: string;
 }

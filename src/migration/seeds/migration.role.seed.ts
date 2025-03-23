@@ -1,13 +1,12 @@
-import { Injectable } from '@nestjs/common';
 import { Command } from 'nestjs-command';
-
+import { Injectable } from '@nestjs/common';
 import {
     ENUM_POLICY_ACTION,
     ENUM_POLICY_ROLE_TYPE,
     ENUM_POLICY_SUBJECT,
 } from 'src/modules/policy/enums/policy.enum';
-import { RoleCreateRequestDto } from 'src/modules/role/dtos/request/role.create.request.dto';
 import { RoleService } from 'src/modules/role/services/role.service';
+import { RoleCreateRequestDto } from 'src/modules/role/dtos/request/role.create.request.dto';
 
 @Injectable()
 export class MigrationRoleSeed {
@@ -33,12 +32,17 @@ export class MigrationRoleSeed {
                 })),
             },
             {
-                name: 'expert',
+                name: 'individual',
                 type: ENUM_POLICY_ROLE_TYPE.USER,
                 permissions: [],
             },
             {
-                name: 'user',
+                name: 'premium',
+                type: ENUM_POLICY_ROLE_TYPE.USER,
+                permissions: [],
+            },
+            {
+                name: 'business',
                 type: ENUM_POLICY_ROLE_TYPE.USER,
                 permissions: [],
             },

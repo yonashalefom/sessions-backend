@@ -2,6 +2,7 @@ import {
     Body,
     ConflictException,
     Controller,
+    Delete,
     Get,
     Param,
     Patch,
@@ -45,6 +46,7 @@ import { ENUM_ROLE_STATUS_CODE_ERROR } from 'src/modules/role/enums/role.status-
 import {
     RoleAdminActiveDoc,
     RoleAdminCreateDoc,
+    RoleAdminDeleteDoc,
     RoleAdminGetDoc,
     RoleAdminInactiveDoc,
     RoleAdminListDoc,
@@ -58,8 +60,9 @@ import { RoleIsActivePipe } from 'src/modules/role/pipes/role.is-active.pipe';
 import { RoleParsePipe } from 'src/modules/role/pipes/role.parse.pipe';
 import { RoleDoc } from 'src/modules/role/repository/entities/role.entity';
 import { RoleService } from 'src/modules/role/services/role.service';
-import { UserService } from 'src/modules/user/services/user.service';
 import { DatabaseIdResponseDto } from 'src/common/database/dtos/response/database.id.response.dto';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
+import { RoleIsUsedPipe } from 'src/modules/role/pipes/role.is-used.pipe';
 
 @ApiTags('modules.admin.role')
 @Controller({
@@ -69,8 +72,7 @@ import { DatabaseIdResponseDto } from 'src/common/database/dtos/response/databas
 export class RoleAdminController {
     constructor(
         private readonly paginationService: PaginationService,
-        private readonly roleService: RoleService,
-        private readonly userService: UserService
+        private readonly roleService: RoleService
     ) {}
 
     @RoleAdminListDoc()
@@ -80,6 +82,7 @@ export class RoleAdminController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('/list')
@@ -114,8 +117,7 @@ export class RoleAdminController {
             total,
             _limit
         );
-        const mapRoles: RoleListResponseDto[] =
-            await this.roleService.mapList(roles);
+        const mapRoles: RoleListResponseDto[] = this.roleService.mapList(roles);
 
         return {
             _pagination: { total, totalPage },
@@ -130,13 +132,14 @@ export class RoleAdminController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
-    @Get('get/:role')
+    @Get('/get/:role')
     async get(
         @Param('role', RequestRequiredPipe, RoleParsePipe) role: RoleDoc
     ): Promise<IResponse<RoleGetResponseDto>> {
-        const mapRole: RoleGetResponseDto = await this.roleService.mapGet(role);
+        const mapRole: RoleGetResponseDto = this.roleService.mapGet(role);
 
         return { data: mapRole };
     }
@@ -148,6 +151,7 @@ export class RoleAdminController {
         action: [ENUM_POLICY_ACTION.READ, ENUM_POLICY_ACTION.CREATE],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Post('/create')
@@ -182,6 +186,7 @@ export class RoleAdminController {
         action: [ENUM_POLICY_ACTION.READ, ENUM_POLICY_ACTION.UPDATE],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Put('/update/:role')
@@ -201,9 +206,10 @@ export class RoleAdminController {
     @Response('role.inactive')
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.ROLE,
-        action: [ENUM_POLICY_ACTION.READ],
+        action: [ENUM_POLICY_ACTION.READ, ENUM_POLICY_ACTION.UPDATE],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Patch('/update/:role/inactive')
@@ -225,9 +231,10 @@ export class RoleAdminController {
     @Response('role.active')
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.ROLE,
-        action: [ENUM_POLICY_ACTION.READ],
+        action: [ENUM_POLICY_ACTION.READ, ENUM_POLICY_ACTION.UPDATE],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Patch('/update/:role/active')
@@ -241,6 +248,26 @@ export class RoleAdminController {
         role: RoleDoc
     ): Promise<void> {
         await this.roleService.active(role);
+
+        return;
+    }
+
+    @RoleAdminDeleteDoc()
+    @Response('role.delete')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.ROLE,
+        action: [ENUM_POLICY_ACTION.READ, ENUM_POLICY_ACTION.DELETE],
+    })
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @ApiKeyProtected()
+    @Delete('/delete/:role')
+    async delete(
+        @Param('role', RequestRequiredPipe, RoleParsePipe, RoleIsUsedPipe)
+        role: RoleDoc
+    ): Promise<void> {
+        await this.roleService.delete(role);
 
         return;
     }

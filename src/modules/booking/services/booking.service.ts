@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+    BadRequestException,
+    forwardRef,
+    Inject,
+    Injectable,
+} from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { Document } from 'mongoose';
 import { DatabaseQueryAnd } from 'src/common/database/decorators/database.decorator';
@@ -10,7 +15,6 @@ import {
     IDatabaseOptions,
     IDatabaseSaveOptions,
 } from 'src/common/database/interfaces/database.interface';
-import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
 import {
     BookingCreateRequestDto,
@@ -30,13 +34,17 @@ import { BookingRepository } from 'src/modules/booking/repository/repositories/b
 import { EventDoc } from 'src/modules/events/repository/entities/event.entity';
 import { SlotService } from 'src/modules/slot/services/slot.service';
 import { DateRange } from 'src/modules/slot/types/types';
+import { HelperMomentDateService } from 'src/common/helper/services/helper.moment.date.service';
+
+export type WrapperType<T> = T; // WrapperType === Relation
 
 @Injectable()
 export class BookingService implements IBookingService {
     constructor(
         private readonly bookingRepository: BookingRepository,
-        private readonly slotService: SlotService,
-        private readonly helperDateService: HelperDateService,
+        @Inject(forwardRef(() => SlotService))
+        private readonly slotService: WrapperType<SlotService>,
+        private readonly helperDateService: HelperMomentDateService,
         private readonly helperURLService: HelperURLService
     ) {}
 

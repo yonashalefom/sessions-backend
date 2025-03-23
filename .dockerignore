@@ -5,6 +5,8 @@ dist/
 swagger.json
 .husky/
 .github/
+assets/
+src/metadata.ts
 
 # Logs
 logs/
@@ -25,3 +27,4 @@ docker-compose.yml
 cspell.json
 README.md
 nodemon.json
+templates

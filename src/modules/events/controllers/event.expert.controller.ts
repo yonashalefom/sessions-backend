@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ClientSession, Connection } from 'mongoose';
 import { ENUM_APP_STATUS_CODE_ERROR } from 'src/app/enums/app.status-code.enum';
-import { DatabaseConnection } from 'src/common/database/decorators/database.decorator';
+import { InjectDatabaseConnection } from 'src/common/database/decorators/database.decorator';
 import { DatabaseIdResponseDto } from 'src/common/database/dtos/response/database.id.response.dto';
 import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
 import {
@@ -32,6 +32,7 @@ import { IResponse } from 'src/common/response/interfaces/response.interface';
 import { ENUM_USER_STATUS_CODE_ERROR } from 'src/modules/user/enums/user.status-code.enum';
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 
 @Controller({
     version: '1',
@@ -39,7 +40,8 @@ import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
 })
 export class EventExpertController {
     constructor(
-        @DatabaseConnection() private readonly databaseConnection: Connection,
+        @InjectDatabaseConnection()
+        private readonly databaseConnection: Connection,
         private readonly eventService: EventService,
         private readonly paginationService: PaginationService
     ) {}
@@ -52,6 +54,7 @@ export class EventExpertController {
         action: [ENUM_POLICY_ACTION.CREATE],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.EXPERT)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Post('/create')

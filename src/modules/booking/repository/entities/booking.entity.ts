@@ -1,4 +1,3 @@
-import { DatabaseEntityAbstract } from 'src/common/database/abstracts/database.entity.abstract';
 import {
     DatabaseEntity,
     DatabaseProp,
@@ -11,13 +10,14 @@ import {
 } from 'src/modules/booking/repository/entities/booking.reference.entity';
 import { EventEntity } from 'src/modules/events/repository/entities/event.entity';
 import { UserEntity } from 'src/modules/user/repository/entities/user.entity';
+import { DatabaseEntityBase } from 'src/common/database/bases/database.entity';
 
 export type BookingStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
 
 export const BookingTableName = 'Bookings';
 
 @DatabaseEntity({ collection: BookingTableName })
-export class BookingEntity extends DatabaseEntityAbstract {
+export class BookingEntity extends DatabaseEntityBase {
     @DatabaseProp({
         required: true,
         ref: UserEntity.name,
@@ -46,6 +46,7 @@ export class BookingEntity extends DatabaseEntityAbstract {
         required: false,
         unique: true,
         trim: true,
+        type: String,
         maxlength: 500,
         minlength: 15,
     })
@@ -69,6 +70,7 @@ export class BookingEntity extends DatabaseEntityAbstract {
         required: false,
         unique: true,
         trim: true,
+        type: String,
         enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED'],
         default: 'ACCEPTED',
     })
@@ -78,6 +80,7 @@ export class BookingEntity extends DatabaseEntityAbstract {
         required: false,
         unique: true,
         trim: true,
+        type: String,
         maxlength: 500,
         minlength: 3,
     })
@@ -87,6 +90,7 @@ export class BookingEntity extends DatabaseEntityAbstract {
         required: false,
         unique: true,
         trim: true,
+        type: String,
         maxlength: 500,
         minlength: 3,
     })
@@ -102,6 +106,7 @@ export class BookingEntity extends DatabaseEntityAbstract {
         required: false,
         unique: true,
         trim: true,
+        type: String,
         maxlength: 500,
         minlength: 1,
     })

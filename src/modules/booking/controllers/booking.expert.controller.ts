@@ -24,6 +24,7 @@ import { BookingService } from 'src/modules/booking/services/booking.service';
 import { UserGetResponseDto } from 'src/modules/user/dtos/response/user.get.response.dto';
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 
 @ApiTags('modules.expert.booking')
 @Controller({
@@ -36,6 +37,7 @@ export class BookingExpertController {
     // region Cancel Booking
     @Response('booking.cancelBooking')
     @CancelBookingValidation()
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Put('/cancel/:bookingId')

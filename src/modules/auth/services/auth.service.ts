@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import verifyAppleToken from 'verify-apple-id-token';
-import { LoginTicket, OAuth2Client } from 'google-auth-library';
+import { LoginTicket, OAuth2Client, TokenPayload } from 'google-auth-library';
 import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { HelperEncryptionService } from 'src/common/helper/services/helper.encryption.service';
 import { HelperHashService } from 'src/common/helper/services/helper.hash.service';
@@ -17,7 +17,9 @@ import { AuthSocialApplePayloadDto } from 'src/modules/auth/dtos/social/auth.soc
 import { AuthSocialGooglePayloadDto } from 'src/modules/auth/dtos/social/auth.social.google-payload.dto';
 import { ENUM_AUTH_LOGIN_FROM } from 'src/modules/auth/enums/auth.enum';
 import { plainToInstance } from 'class-transformer';
-import { Document } from 'mongoose';
+import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
+import { AuthLoginResponseDto } from 'src/modules/auth/dtos/response/auth.login.response.dto';
+import { Duration } from 'luxon';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -28,7 +30,7 @@ export class AuthService implements IAuthService {
     private readonly jwtRefreshTokenSecretKey: string;
     private readonly jwtRefreshTokenExpirationTime: number;
 
-    private readonly jwtPrefixAuthorization: string;
+    private readonly jwtPrefix: string;
     private readonly jwtAudience: string;
     private readonly jwtIssuer: string;
 
@@ -69,9 +71,7 @@ export class AuthService implements IAuthService {
             'auth.jwt.refreshToken.expirationTime'
         );
 
-        this.jwtPrefixAuthorization = this.configService.get<string>(
-            'auth.jwt.prefixAuthorization'
-        );
+        this.jwtPrefix = this.configService.get<string>('auth.jwt.prefix');
         this.jwtAudience = this.configService.get<string>('auth.jwt.audience');
         this.jwtIssuer = this.configService.get<string>('auth.jwt.issuer');
 
@@ -91,6 +91,14 @@ export class AuthService implements IAuthService {
         );
         this.passwordMaxAttempt = this.configService.get<number>(
             'auth.password.maxAttempt'
+        );
+
+        // apple
+        this.appleClientId = this.configService.get<string>(
+            'auth.apple.clientId'
+        );
+        this.appleSignInClientId = this.configService.get<string>(
+            'auth.apple.signInClientId'
         );
 
         // google
@@ -180,31 +188,34 @@ export class AuthService implements IAuthService {
         );
     }
 
-    async createPayloadAccessToken<T extends Document>(
-        data: T,
+    async createPayloadAccessToken(
+        data: IUserDoc,
+        session: string,
+        loginDate: Date,
         loginFrom: ENUM_AUTH_LOGIN_FROM
     ): Promise<AuthJwtAccessPayloadDto> {
-        const loginDate = this.helperDateService.create();
-        const plainObject: any = data.toObject();
-
         return plainToInstance(AuthJwtAccessPayloadDto, {
-            _id: plainObject._id,
-            type: plainObject.role.type,
-            role: plainObject.role._id,
-            email: plainObject.email,
-            permissions: plainObject.role.permissions,
+            user: data._id,
+            type: data.role.type,
+            role: data.role._id,
+            email: data.email,
+            permissions: data.role.permissions,
+            status: data.status,
+            session,
             loginDate,
             loginFrom,
-        });
+        } as AuthJwtAccessPayloadDto);
     }
 
     async createPayloadRefreshToken({
-        _id,
+        user,
+        session,
         loginFrom,
         loginDate,
     }: AuthJwtAccessPayloadDto): Promise<AuthJwtRefreshPayloadDto> {
         return {
-            _id,
+            user,
+            session,
             loginFrom,
             loginDate,
         };
@@ -220,10 +231,14 @@ export class AuthService implements IAuthService {
     ): Promise<IAuthPassword> {
         const salt: string = await this.createSalt(this.passwordSaltLength);
 
-        const passwordExpired: Date = this.helperDateService.forwardInSeconds(
-            options?.temporary
-                ? this.passwordExpiredTemporary
-                : this.passwordExpiredIn
+        const today = this.helperDateService.create();
+        const passwordExpired: Date = this.helperDateService.forward(
+            today,
+            Duration.fromObject({
+                seconds: options?.temporary
+                    ? this.passwordExpiredTemporary
+                    : this.passwordExpiredIn,
+            })
         );
         const passwordCreated: Date = this.helperDateService.create();
         const passwordHash = this.helperHashService.bcrypt(password, salt);
@@ -247,24 +262,70 @@ export class AuthService implements IAuthService {
         return today > passwordExpiredConvert;
     }
 
-    async getTokenType(): Promise<string> {
-        return this.jwtPrefixAuthorization;
+    async createToken(
+        user: IUserDoc,
+        session: string
+    ): Promise<AuthLoginResponseDto> {
+        const loginDate = this.helperDateService.create();
+        const roleType = user.role.type;
+
+        const payloadAccessToken: AuthJwtAccessPayloadDto =
+            await this.createPayloadAccessToken(
+                user,
+                session,
+                loginDate,
+                ENUM_AUTH_LOGIN_FROM.CREDENTIAL
+            );
+        const accessToken: string = await this.createAccessToken(
+            user._id,
+            payloadAccessToken
+        );
+
+        const payloadRefreshToken: AuthJwtRefreshPayloadDto =
+            await this.createPayloadRefreshToken(payloadAccessToken);
+        const refreshToken: string = await this.createRefreshToken(
+            user._id,
+            payloadRefreshToken
+        );
+
+        return {
+            tokenType: this.jwtPrefix,
+            roleType,
+            expiresIn: this.jwtAccessTokenExpirationTime,
+            accessToken,
+            refreshToken,
+        };
     }
 
-    async getAccessTokenExpirationTime(): Promise<number> {
-        return this.jwtAccessTokenExpirationTime;
-    }
+    async refreshToken(
+        user: IUserDoc,
+        refreshTokenFromRequest: string
+    ): Promise<AuthLoginResponseDto> {
+        const roleType = user.role.type;
 
-    async getRefreshTokenExpirationTime(): Promise<number> {
-        return this.jwtRefreshTokenExpirationTime;
-    }
+        const payloadRefreshToken =
+            this.helperEncryptionService.jwtDecrypt<AuthJwtRefreshPayloadDto>(
+                refreshTokenFromRequest
+            );
+        const payloadAccessToken: AuthJwtAccessPayloadDto =
+            await this.createPayloadAccessToken(
+                user,
+                payloadRefreshToken.session,
+                payloadRefreshToken.loginDate,
+                payloadRefreshToken.loginFrom
+            );
+        const accessToken: string = await this.createAccessToken(
+            user._id,
+            payloadAccessToken
+        );
 
-    async getIssuer(): Promise<string> {
-        return this.jwtIssuer;
-    }
-
-    async getAudience(): Promise<string> {
-        return this.jwtAudience;
+        return {
+            tokenType: this.jwtPrefix,
+            roleType,
+            expiresIn: this.jwtAccessTokenExpirationTime,
+            accessToken,
+            refreshToken: refreshTokenFromRequest,
+        };
     }
 
     async getPasswordAttempt(): Promise<boolean> {
@@ -283,7 +344,7 @@ export class AuthService implements IAuthService {
             clientId: [this.appleClientId, this.appleSignInClientId],
         });
 
-        return { email: payload.email };
+        return { email: payload.email, emailVerified: payload.email_verified };
     }
 
     async googleGetTokenInfo(
@@ -292,8 +353,13 @@ export class AuthService implements IAuthService {
         const login: LoginTicket = await this.googleClient.verifyIdToken({
             idToken: idToken,
         });
-        const payload = login.getPayload();
+        const payload: TokenPayload = login.getPayload();
 
-        return { email: payload.email };
+        return {
+            email: payload.email,
+            emailVerified: true,
+            name: payload.name,
+            photo: payload.picture,
+        };
     }
 }

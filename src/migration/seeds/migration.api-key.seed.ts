@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
 import { Command } from 'nestjs-command';
-
-import { ENUM_API_KEY_TYPE } from 'src/modules/api-key/enums/api-key.enum';
+import { Injectable } from '@nestjs/common';
 import { ApiKeyService } from 'src/modules/api-key/services/api-key.service';
+import { ENUM_API_KEY_TYPE } from 'src/modules/api-key/enums/api-key.enum';
 
 @Injectable()
 export class MigrationApiKeySeed {
@@ -14,19 +13,19 @@ export class MigrationApiKeySeed {
     })
     async seeds(): Promise<void> {
         try {
-            const apiKeyDefaultKey = process.env.DEFAULT_API_KEY;
-            const apiKeyDefaultSecret = process.env.DEFAULT_API_SECRET;
+            const apiKeyDefaultKey = 'v8VB0yY887lMpTA2VJMV';
+            const apiKeyDefaultSecret = 'zeZbtGTugBTn3Qd5UXtSZBwt7gn3bg';
             await this.apiKeyService.createRaw({
-                name: 'Sample Api Key - Default',
+                name: 'Api Key Default Migration',
                 type: ENUM_API_KEY_TYPE.DEFAULT,
                 key: apiKeyDefaultKey,
                 secret: apiKeyDefaultSecret,
             });
 
-            const apiKeyPrivateKey = process.env.PRIVATE_API_KEY;
-            const apiKeyPrivateSecret = process.env.PRIVATE_API_SECRET;
+            const apiKeyPrivateKey = 'OgXYkQyOtP7Zl5uCbKd8';
+            const apiKeyPrivateSecret = '3kh0hW7pIAH3wW9DwUGrP8Y5RW9Ywv';
             await this.apiKeyService.createRaw({
-                name: 'Sample Api Key - System',
+                name: 'Api Key System Migration',
                 type: ENUM_API_KEY_TYPE.SYSTEM,
                 key: apiKeyPrivateKey,
                 secret: apiKeyPrivateSecret,

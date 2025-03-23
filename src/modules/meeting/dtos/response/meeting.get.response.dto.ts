@@ -4,7 +4,9 @@ import { DatabaseDto } from 'src/common/database/dtos/database.dto';
 import { CallType } from 'src/modules/meeting/repository/entities/meeting.entity';
 import { UserShortResponseDto } from 'src/modules/user/dtos/response/user.short.response.dto';
 
-export class MeetingGetResponseDto extends DatabaseDto {
+export class MeetingGetResponseDto extends OmitType(DatabaseDto, [
+    'createdBy',
+] as const) {
     @Type(() => UserShortResponseDto)
     createdBy: UserShortResponseDto;
     meetingId: string;

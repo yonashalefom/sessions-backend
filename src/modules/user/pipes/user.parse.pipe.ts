@@ -11,7 +11,6 @@ export class UserParsePipe implements PipeTransform {
 
     async transform(value: string): Promise<UserDoc> {
         const user: UserDoc = await this.userService.findOneById(value);
-
         if (!user) {
             throw new NotFoundException({
                 statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
@@ -30,7 +29,6 @@ export class UserActiveParsePipe implements PipeTransform {
     async transform(value: string): Promise<IUserDoc> {
         const user =
             await this.userService.findOneWithRoleAndCountryById(value);
-
         if (!user) {
             throw new NotFoundException({
                 statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,

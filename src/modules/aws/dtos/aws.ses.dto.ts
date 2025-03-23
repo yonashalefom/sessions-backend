@@ -1,15 +1,20 @@
-import { ApiProperty, OmitType, PickType } from '@nestjs/swagger';
+import {
+    ApiProperty,
+    getSchemaPath,
+    OmitType,
+    PickType,
+} from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
     ArrayNotEmpty,
     IsArray,
-    IsEmail,
     IsNotEmpty,
     IsNotEmptyObject,
     IsObject,
     IsOptional,
     IsString,
 } from 'class-validator';
+import { IsCustomEmail } from 'src/common/request/validations/request.custom-email.validation';
 
 export class AwsSESCreateTemplateDto {
     @ApiProperty({
@@ -71,7 +76,7 @@ export class AwsSESSendDto<T> {
     @ApiProperty({
         required: true,
     })
-    @IsEmail()
+    @IsCustomEmail()
     @IsString()
     @IsNotEmpty()
     sender: string;
@@ -79,7 +84,7 @@ export class AwsSESSendDto<T> {
     @ApiProperty({
         required: false,
     })
-    @IsEmail()
+    @IsCustomEmail()
     @IsString()
     @IsOptional()
     replyTo?: string;
@@ -89,7 +94,7 @@ export class AwsSESSendDto<T> {
         isArray: true,
     })
     @IsNotEmpty()
-    @IsEmail(null, { each: true })
+    @IsCustomEmail({ each: true })
     @IsArray()
     @ArrayNotEmpty()
     recipients: string[];
@@ -99,7 +104,7 @@ export class AwsSESSendDto<T> {
         isArray: true,
     })
     @IsOptional()
-    @IsEmail(null, { each: true })
+    @IsCustomEmail({ each: true })
     @IsArray()
     cc?: string[];
 
@@ -108,7 +113,7 @@ export class AwsSESSendDto<T> {
         isArray: true,
     })
     @IsOptional()
-    @IsEmail(null, { each: true })
+    @IsCustomEmail({ each: true })
     @IsArray()
     bcc?: string[];
 }
@@ -119,7 +124,7 @@ export class AwsSESSendBulkRecipientsDto extends PickType(AwsSESSendDto, [
     @ApiProperty({
         required: true,
     })
-    @IsEmail()
+    @IsCustomEmail()
     @IsString()
     @IsNotEmpty()
     recipient: string;
@@ -133,6 +138,7 @@ export class AwsSESSendBulkDto extends OmitType(AwsSESSendDto, [
         required: true,
         isArray: true,
         type: AwsSESSendBulkRecipientsDto,
+        oneOf: [{ $ref: getSchemaPath(AwsSESSendBulkRecipientsDto) }],
     })
     @IsNotEmpty()
     @IsArray()

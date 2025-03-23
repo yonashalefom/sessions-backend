@@ -1,72 +1,53 @@
 import { faker } from '@faker-js/faker';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { StreamingBlobTypes } from '@smithy/types';
 
 export class AwsS3Dto {
     @ApiProperty({
         required: true,
-        nullable: false,
     })
-    @Type(() => String)
     bucket: string;
 
     @ApiProperty({
         required: true,
-        nullable: false,
-        example: faker.system.directoryPath(),
-    })
-    @Type(() => String)
-    path: string;
-
-    @ApiProperty({
-        required: true,
-        nullable: false,
         example: faker.system.filePath(),
     })
-    @Type(() => String)
-    pathWithFilename: string;
+    key: string;
 
     @ApiProperty({
-        required: true,
-        nullable: false,
-        example: faker.system.fileName(),
-    })
-    @Type(() => String)
-    filename: string;
-
-    @ApiProperty({
-        required: true,
-        nullable: false,
+        required: false,
         example: `${faker.internet.url()}/${faker.system.filePath()}`,
     })
-    @Type(() => String)
+    cdnUrl?: string;
+
+    @ApiProperty({
+        required: false,
+        example: `${faker.internet.url()}/${faker.system.filePath()}`,
+    })
     completedUrl: string;
 
     @ApiProperty({
         required: true,
-        nullable: false,
-        example: faker.internet.url(),
-    })
-    @Type(() => String)
-    baseUrl: string;
-
-    @ApiProperty({
-        required: true,
-        nullable: false,
         example: faker.system.mimeType(),
     })
-    @Type(() => String)
     mime: string;
 
     @ApiProperty({
         required: false,
-        nullable: true,
     })
     duration?: number;
 
     @ApiProperty({
+        required: false,
+    })
+    data?: StreamingBlobTypes & {
+        transformToString?: (encode: string) => string;
+        transformToByteArray?: () => Buffer;
+        transformToWebStream?: () => ReadableStream<Buffer>;
+    };
+
+    @ApiProperty({
         required: true,
-        nullable: false,
     })
     size: number;
 }

@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { ApiProperty, OmitType } from '@nestjs/swagger';
-import { Exclude, Type } from 'class-transformer';
+import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { DatabaseDto } from 'src/common/database/dtos/database.dto';
 import { ENUM_POLICY_ROLE_TYPE } from 'src/modules/policy/enums/policy.enum';
 import { RolePermissionDto } from 'src/modules/role/dtos/role.permission.dto';
@@ -10,7 +10,6 @@ export class RoleGetResponseDto extends DatabaseDto {
         description: 'Name of role',
         example: faker.person.jobTitle(),
         required: true,
-        nullable: false,
     })
     name: string;
 
@@ -18,7 +17,7 @@ export class RoleGetResponseDto extends DatabaseDto {
         description: 'Description of role',
         example: faker.lorem.sentence(),
         required: false,
-        nullable: true,
+        maxLength: 500,
     })
     description?: string;
 
@@ -26,7 +25,6 @@ export class RoleGetResponseDto extends DatabaseDto {
         description: 'Active flag of role',
         example: true,
         required: true,
-        nullable: false,
     })
     isActive: boolean;
 
@@ -34,36 +32,19 @@ export class RoleGetResponseDto extends DatabaseDto {
         description: 'Representative for role type',
         example: ENUM_POLICY_ROLE_TYPE.ADMIN,
         required: true,
-        nullable: false,
+
+        enum: ENUM_POLICY_ROLE_TYPE,
     })
     type: ENUM_POLICY_ROLE_TYPE;
 
     @ApiProperty({
         type: RolePermissionDto,
+        oneOf: [{ $ref: getSchemaPath(RolePermissionDto) }],
         required: true,
-        nullable: false,
+
+        isArray: true,
         default: [],
     })
     @Type(() => RolePermissionDto)
-    permissions: RolePermissionDto;
-}
-
-export class RoleShortResponseDto extends OmitType(RoleGetResponseDto, [
-    'permissions',
-    'description',
-    'createdAt',
-    'updatedAt',
-    'isActive',
-] as const) {
-    @Exclude()
-    description?: string;
-    @Exclude()
-    // @Transform(({ value }) => value.length)
-    permissions: number;
-    @Exclude()
-    createdAt?: string;
-    @Exclude()
-    updatedAt?: string;
-    @Exclude()
-    isActive?: boolean;
+    permissions: RolePermissionDto[];
 }

@@ -36,6 +36,7 @@ import { ScheduleDoc } from 'src/modules/schedules/repository/entities/schedule.
 import { ScheduleService } from 'src/modules/schedules/services/schedule.service';
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 
 @ApiTags('modules.shared.event')
 @Controller({
@@ -58,6 +59,7 @@ export class ScheduleSharedController {
         ENUM_POLICY_ROLE_TYPE.EXPERT,
         ENUM_POLICY_ROLE_TYPE.USER
     )
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('get/by-expert/:expertId')
@@ -112,6 +114,7 @@ export class ScheduleSharedController {
         ENUM_POLICY_ROLE_TYPE.EXPERT,
         ENUM_POLICY_ROLE_TYPE.USER
     )
+    @UserProtected()
     @AuthJwtAccessProtected()
     @Get('/get/:scheduleId')
     async get(

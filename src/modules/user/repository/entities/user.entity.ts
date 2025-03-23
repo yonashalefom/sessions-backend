@@ -1,4 +1,4 @@
-import { DatabaseEntityAbstract } from 'src/common/database/abstracts/database.entity.abstract';
+import { DatabaseEntityBase } from 'src/common/database/bases/database.entity';
 import {
     DatabaseEntity,
     DatabaseProp,
@@ -24,12 +24,16 @@ import {
 import {
     UserMobileNumberEntity,
     UserMobileNumberSchema,
-} from 'src/modules/user/repository/entities/embedded/user.mobile';
+} from 'src/modules/user/repository/entities/user.mobile-number.entity';
+import {
+    UserVerificationEntity,
+    UserVerificationSchema,
+} from 'src/modules/user/repository/entities/user.verification.entity';
 
 export const UserTableName = 'Users';
 
 @DatabaseEntity({ collection: UserTableName })
-export class UserEntity extends DatabaseEntityAbstract {
+export class UserEntity extends DatabaseEntityBase {
     @DatabaseProp({
         required: true,
         index: true,
@@ -55,6 +59,12 @@ export class UserEntity extends DatabaseEntityAbstract {
         schema: UserMobileNumberSchema,
     })
     mobileNumber?: UserMobileNumberEntity;
+
+    @DatabaseProp({
+        required: true,
+        schema: UserVerificationSchema,
+    })
+    verification: UserVerificationEntity;
 
     @DatabaseProp({
         required: true,
@@ -109,6 +119,7 @@ export class UserEntity extends DatabaseEntityAbstract {
 
     @DatabaseProp({
         required: true,
+        type: String,
         enum: ENUM_USER_SIGN_UP_FROM,
     })
     signUpFrom: ENUM_USER_SIGN_UP_FROM;
@@ -136,6 +147,7 @@ export class UserEntity extends DatabaseEntityAbstract {
 
     @DatabaseProp({
         required: false,
+        type: String,
         enum: ENUM_USER_GENDER,
     })
     gender?: ENUM_USER_GENDER;

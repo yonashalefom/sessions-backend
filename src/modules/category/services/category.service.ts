@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { Document } from 'mongoose';
-import { DatabaseQueryContain } from 'src/common/database/decorators/database.decorator';
+import { DatabaseHelperQueryContain } from 'src/common/database/decorators/database.decorator';
 import {
     IDatabaseCreateManyOptions,
     IDatabaseCreateOptions,
@@ -51,7 +51,7 @@ export class CategoryService implements ICategoryService {
         options?: IDatabaseOptions
     ): Promise<CategoryDoc> {
         return this.categoryRepository.findOne(
-            DatabaseQueryContain('category', category),
+            DatabaseHelperQueryContain('category', category),
             options
         );
     }

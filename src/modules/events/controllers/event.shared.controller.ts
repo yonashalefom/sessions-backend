@@ -33,6 +33,7 @@ import {
 } from 'src/modules/policy/enums/policy.enum';
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 
 @Controller({
     version: '1',
@@ -54,6 +55,7 @@ export class EventSharedController {
         ENUM_POLICY_ROLE_TYPE.EXPERT,
         ENUM_POLICY_ROLE_TYPE.USER
     )
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('/user/:userId')
@@ -108,6 +110,7 @@ export class EventSharedController {
         ENUM_POLICY_ROLE_TYPE.EXPERT,
         ENUM_POLICY_ROLE_TYPE.USER
     )
+    @UserProtected()
     @AuthJwtAccessProtected()
     @Get('/user/:userId/:event')
     async get(
@@ -133,6 +136,7 @@ export class EventSharedController {
         ENUM_POLICY_ROLE_TYPE.EXPERT,
         ENUM_POLICY_ROLE_TYPE.USER
     )
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('/:eventId/slots')

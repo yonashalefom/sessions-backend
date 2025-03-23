@@ -4,7 +4,7 @@ import moment from 'moment-timezone';
 import { Document } from 'mongoose';
 import {
     DatabaseQueryAnd,
-    DatabaseQueryContain,
+    DatabaseHelperQueryContain,
 } from 'src/common/database/decorators/database.decorator';
 import {
     IDatabaseCreateOptions,
@@ -114,15 +114,15 @@ export class EventService implements IEventService {
         return this.eventRepository.create<EventEntity>(create, options);
     }
 
-    async exists(
-        email: string,
-        options?: IDatabaseExistOptions
-    ): Promise<boolean> {
-        return this.eventRepository.exists(
-            DatabaseQueryContain('email', email, { fullWord: true }),
-            { ...options, withDeleted: true }
-        );
-    }
+    // async exists(
+    //     email: string,
+    //     options?: IDatabaseExistOptions
+    // ): Promise<boolean> {
+    //     return this.eventRepository.exists(
+    //         DatabaseHelperQueryContain('email', email, { fullWord: true }),
+    //         { ...options, withDeleted: true }
+    //     );
+    // }
 
     async filterValidExpertise(ids: string[]): Promise<string[]> {
         // Fetch only the IDs that exist in the database

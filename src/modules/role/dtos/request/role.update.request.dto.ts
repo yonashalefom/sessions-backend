@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { faker } from '@faker-js/faker';
 import {
     IsArray,
@@ -6,33 +6,30 @@ import {
     IsNotEmpty,
     IsOptional,
     IsString,
-    ValidateIf,
+    MaxLength,
     ValidateNested,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { RolePermissionDto } from 'src/modules/role/dtos/role.permission.dto';
-import {
-    ENUM_POLICY_ACTION,
-    ENUM_POLICY_ROLE_TYPE,
-    ENUM_POLICY_SUBJECT,
-} from 'src/modules/policy/enums/policy.enum';
+import { ENUM_POLICY_ROLE_TYPE } from 'src/modules/policy/enums/policy.enum';
 
 export class RoleUpdateRequestDto {
     @ApiProperty({
         description: 'Description of role',
         example: faker.lorem.sentence(),
         required: false,
-        nullable: true,
+        maxLength: 500,
     })
     @IsString()
     @IsOptional()
-    @Type(() => String)
+    @MaxLength(500)
     description?: string;
 
     @ApiProperty({
         description: 'Representative for role type',
-        example: 'ADMIN',
+        example: ENUM_POLICY_ROLE_TYPE.ADMIN,
         required: true,
+        enum: ENUM_POLICY_ROLE_TYPE,
     })
     @IsEnum(ENUM_POLICY_ROLE_TYPE)
     @IsNotEmpty()
@@ -42,22 +39,12 @@ export class RoleUpdateRequestDto {
         required: true,
         description: 'Permission list of role',
         isArray: true,
-        default: [],
-        example: [
-            {
-                subject: ENUM_POLICY_SUBJECT.API_KEY,
-                action: [ENUM_POLICY_ACTION.MANAGE],
-            },
-        ],
         type: RolePermissionDto,
+        oneOf: [{ $ref: getSchemaPath(RolePermissionDto) }],
     })
     @Type(() => RolePermissionDto)
     @IsNotEmpty()
-    @IsArray()
     @ValidateNested()
-    @ValidateIf(e => e.type === ENUM_POLICY_ROLE_TYPE.ADMIN)
-    @Transform(({ value, obj }) =>
-        obj.type !== ENUM_POLICY_ROLE_TYPE.ADMIN ? [] : value
-    )
+    @IsArray()
     permissions: RolePermissionDto[];
 }

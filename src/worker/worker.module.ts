@@ -1,34 +1,13 @@
-import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EmailModule } from 'src/modules/email/email.module';
 import { EmailProcessor } from 'src/modules/email/processors/email.processor';
-import { WORKER_CONNECTION_NAME } from 'src/worker/constants/worker.constant';
+import { SessionProcessor } from 'src/modules/session/processors/session.processor';
+import { SessionModule } from 'src/modules/session/session.module';
+import { SmsProcessor } from 'src/modules/sms/processors/sms.processor';
+import { SmsModule } from 'src/modules/sms/sms.module';
 
 @Module({
-    imports: [
-        BullModule.forRootAsync({
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
-                connection: {
-                    name: WORKER_CONNECTION_NAME,
-                    host: configService.get<string>('redis.host'),
-                    port: configService.get<number>('redis.port'),
-                    password: configService.get<string>('redis.password'),
-                    tls: configService.get<any>('redis.tls'),
-                },
-                defaultJobOptions: {
-                    backoff: {
-                        type: 'exponential',
-                        delay: 3000,
-                    },
-                    attempts: 3,
-                },
-            }),
-        }),
-        EmailModule,
-    ],
-    providers: [EmailProcessor],
+    imports: [EmailModule, SessionModule, SmsModule],
+    providers: [EmailProcessor, SessionProcessor, SmsProcessor],
 })
 export class WorkerModule {}

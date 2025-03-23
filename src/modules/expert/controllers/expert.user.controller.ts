@@ -30,13 +30,14 @@ import {
     ENUM_POLICY_ROLE_TYPE,
     ENUM_POLICY_SUBJECT,
 } from 'src/modules/policy/enums/policy.enum';
-import { CategoryDoc } from 'src/modules/setting/repository/entities/setting.entity';
 import { USER_DEFAULT_STATUS } from 'src/modules/user/constants/user.list.constant';
 import { ExpertsListByCategoryResponseDto } from 'src/modules/user/dtos/response/experts.list.by.category.response.dto';
 import { UserListResponseDto } from 'src/modules/user/dtos/response/user.list.response.dto';
 import { ENUM_ACTIVE_USER_STATUS } from 'src/modules/user/enums/user.enum';
 import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
 import { UserService } from 'src/modules/user/services/user.service';
+import { CategoryDoc } from 'src/modules/category/repository/entities/category.entity';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 
 @ApiTags('modules.shared.expert')
 @Controller({
@@ -57,9 +58,10 @@ export class ExpertUserController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
-    @Get('get/all')
+    @Get('/get/all')
     async getAllExperts(
         @PaginationQuery({
             availableSearch: EXPERT_DEFAULT_AVAILABLE_SEARCH,
@@ -83,13 +85,16 @@ export class ExpertUserController {
         };
 
         const experts: IUserDoc[] =
-            await this.userService.findAllWithRoleAndCountry(find, {
-                paging: {
-                    limit: _limit,
-                    offset: _offset,
-                },
-                order: _order,
-            });
+            await this.userService.findAllWithRoleAndCountryFromOldSessions(
+                find,
+                {
+                    paging: {
+                        limit: _limit,
+                        offset: _offset,
+                    },
+                    order: _order,
+                }
+            );
         const total: number = await this.userService.getTotal(find);
         const totalPage: number = this.paginationService.totalPage(
             total,
@@ -115,6 +120,7 @@ export class ExpertUserController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('get/by/expertise/:expertiseId')
@@ -146,13 +152,16 @@ export class ExpertUserController {
         };
 
         const experts: IUserDoc[] =
-            await this.userService.findAllWithRoleAndCountry(find, {
-                paging: {
-                    limit: _limit,
-                    offset: _offset,
-                },
-                order: _order,
-            });
+            await this.userService.findAllWithRoleAndCountryFromOldSessions(
+                find,
+                {
+                    paging: {
+                        limit: _limit,
+                        offset: _offset,
+                    },
+                    order: _order,
+                }
+            );
         const total: number = await this.userService.getTotal(find);
         const totalPage: number = this.paginationService.totalPage(
             total,
@@ -176,6 +185,7 @@ export class ExpertUserController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('get/by/expertise/slug/:expertiseSlug')
@@ -208,13 +218,16 @@ export class ExpertUserController {
         };
 
         const experts: IUserDoc[] =
-            await this.userService.findAllWithRoleAndCountry(find, {
-                paging: {
-                    limit: _limit,
-                    offset: _offset,
-                },
-                order: _order,
-            });
+            await this.userService.findAllWithRoleAndCountryFromOldSessions(
+                find,
+                {
+                    paging: {
+                        limit: _limit,
+                        offset: _offset,
+                    },
+                    order: _order,
+                }
+            );
         const total: number = await this.userService.getTotal(find);
         const totalPage: number = this.paginationService.totalPage(
             total,
@@ -238,6 +251,7 @@ export class ExpertUserController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('get/all/by-category')

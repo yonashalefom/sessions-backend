@@ -1,3 +1,4 @@
+import { InjectQueue } from '@nestjs/bullmq';
 import {
     Controller,
     InternalServerErrorException,
@@ -8,14 +9,19 @@ import { ApiTags } from '@nestjs/swagger';
 import { Queue } from 'bullmq';
 import { ClientSession, Connection } from 'mongoose';
 import { ENUM_APP_STATUS_CODE_ERROR } from 'src/app/enums/app.status-code.enum';
-import { DatabaseConnection } from 'src/common/database/decorators/database.decorator';
+import { InjectDatabaseConnection } from 'src/common/database/decorators/database.decorator';
 import { RequestRequiredPipe } from 'src/common/request/pipes/request.required.pipe';
 import { Response } from 'src/common/response/decorators/response.decorator';
 import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
-import { AuthJwtAccessProtected } from 'src/modules/auth/decorators/auth.jwt.decorator';
+import {
+    AuthJwtAccessProtected,
+    AuthJwtPayload,
+} from 'src/modules/auth/decorators/auth.jwt.decorator';
 import { AuthAdminUpdatePasswordDoc } from 'src/modules/auth/docs/auth.admin.doc';
 import { AuthService } from 'src/modules/auth/services/auth.service';
-import { ENUM_EMAIL } from 'src/modules/email/enums/email.enum';
+import { ENUM_SEND_EMAIL_PROCESS } from 'src/modules/email/enums/email.enum';
+import { ENUM_PASSWORD_HISTORY_TYPE } from 'src/modules/password-history/enums/password-history.enum';
+import { PasswordHistoryService } from 'src/modules/password-history/services/password-history.service';
 import {
     PolicyAbilityProtected,
     PolicyRoleProtected,
@@ -25,11 +31,11 @@ import {
     ENUM_POLICY_ROLE_TYPE,
     ENUM_POLICY_SUBJECT,
 } from 'src/modules/policy/enums/policy.enum';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 import { UserNotSelfPipe } from 'src/modules/user/pipes/user.not-self.pipe';
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
 import { UserService } from 'src/modules/user/services/user.service';
-import { WorkerQueue } from 'src/worker/decorators/worker.decorator';
 import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
 
 @ApiTags('modules.admin.auth')
@@ -39,14 +45,15 @@ import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
 })
 export class AuthAdminController {
     constructor(
-        @DatabaseConnection() private readonly databaseConnection: Connection,
-        @WorkerQueue(ENUM_WORKER_QUEUES.EMAIL_QUEUE)
+        @InjectDatabaseConnection()
+        private readonly databaseConnection: Connection,
+        @InjectQueue(ENUM_WORKER_QUEUES.EMAIL_QUEUE)
         private readonly emailQueue: Queue,
         private readonly authService: AuthService,
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        private readonly passwordHistoryService: PasswordHistoryService
     ) {}
 
-    // region Update Password
     @AuthAdminUpdatePasswordDoc()
     @Response('auth.updatePassword')
     @PolicyAbilityProtected({
@@ -54,10 +61,12 @@ export class AuthAdminController {
         action: [ENUM_POLICY_ACTION.READ, ENUM_POLICY_ACTION.UPDATE],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Put('/update/:user/password')
     async updatePassword(
+        @AuthJwtPayload('user') updatedBy: string,
         @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
         user: UserDoc
     ): Promise<void> {
@@ -74,6 +83,7 @@ export class AuthAdminController {
                     temporary: true,
                 }
             );
+
             user = await this.userService.updatePassword(user, password, {
                 session,
             });
@@ -81,24 +91,34 @@ export class AuthAdminController {
                 session,
             });
 
-            this.emailQueue.add(
-                ENUM_EMAIL.TEMP_PASSWORD,
+            await this.passwordHistoryService.createByAdmin(
+                user,
                 {
-                    email: user.email,
-                    name: user.name,
-                    passwordExpiredAt: password.passwordExpired,
-                    password: passwordString,
+                    by: updatedBy,
+                    type: ENUM_PASSWORD_HISTORY_TYPE.TEMPORARY,
                 },
-                {
-                    debounce: {
-                        id: `${ENUM_EMAIL.TEMP_PASSWORD}-${user._id}`,
-                        ttl: 1000,
-                    },
-                }
+                { session }
             );
 
             await session.commitTransaction();
             await session.endSession();
+
+            await this.emailQueue.add(
+                ENUM_SEND_EMAIL_PROCESS.TEMPORARY_PASSWORD,
+                {
+                    send: { email: user.email, name: user.name },
+                    data: {
+                        passwordExpiredAt: password.passwordExpired,
+                        password: passwordString,
+                    },
+                },
+                {
+                    debounce: {
+                        id: `${ENUM_SEND_EMAIL_PROCESS.TEMPORARY_PASSWORD}-${user._id}`,
+                        ttl: 1000,
+                    },
+                }
+            );
 
             return;
         } catch (err: any) {
@@ -112,5 +132,4 @@ export class AuthAdminController {
             });
         }
     }
-    // endregion
 }

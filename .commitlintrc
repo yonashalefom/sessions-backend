@@ -31,10 +31,7 @@
                 "refactor",
                 "revert",
                 "style",
-                "test",
-                "chore",
-                "perf",
-                "build"
+                "test"
             ]
         ]
     }
