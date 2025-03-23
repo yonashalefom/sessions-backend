@@ -50,6 +50,7 @@ import {
 import { UserGetResponseDto } from 'src/modules/user/dtos/response/user.get.response.dto';
 import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
 import { UserActiveParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 
 @ApiTags('modules.user.booking')
 @Controller({
@@ -73,6 +74,7 @@ export class BookingSharedController {
         ENUM_POLICY_ROLE_TYPE.EXPERT,
         ENUM_POLICY_ROLE_TYPE.USER
     )
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('/get/all')
@@ -138,6 +140,7 @@ export class BookingSharedController {
         ENUM_POLICY_ROLE_TYPE.EXPERT,
         ENUM_POLICY_ROLE_TYPE.USER
     )
+    @UserProtected()
     @AuthJwtAccessProtected()
     @Get('/get/:bookingId')
     async get(

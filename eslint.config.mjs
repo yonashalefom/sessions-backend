@@ -18,6 +18,7 @@ export default [
             'dist/*',
             'docs/*',
             'node_modules/*',
+            'src/metadata.ts',
         ],
     },
     {
@@ -42,11 +43,24 @@ export default [
         rules: {
             ...rules,
             '@typescript-eslint/no-explicit-any': 'off',
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': [
+                'warn',
+                {
+                    args: 'all',
+                    argsIgnorePattern: '^_',
+                    caughtErrors: 'all',
+                    caughtErrorsIgnorePattern: '^_',
+                    destructuredArrayIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                    ignoreRestSiblings: true,
+                },
+            ],
         },
     },
     {
         name: 'ts/test',
-        files: ['test/**/*.ts'],
+        files: ['test/**/*.spec.ts'],
         languageOptions: {
             ecmaVersion: 'latest',
             sourceType: 'module',
@@ -66,6 +80,19 @@ export default [
         rules: {
             ...rules,
             '@typescript-eslint/no-explicit-any': 'off',
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': [
+                'warn',
+                {
+                    args: 'all',
+                    argsIgnorePattern: '^_',
+                    caughtErrors: 'all',
+                    caughtErrorsIgnorePattern: '^_',
+                    destructuredArrayIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                    ignoreRestSiblings: true,
+                },
+            ],
         },
     },
 ];

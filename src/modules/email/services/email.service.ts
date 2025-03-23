@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ENUM_EMAIL } from 'src/modules/email/enums/email.enum';
+import { ENUM_SEND_EMAIL_PROCESS } from 'src/modules/email/enums/email.enum';
 import { title } from 'case';
 import { ConfigService } from '@nestjs/config';
 import { IEmailService } from 'src/modules/email/interfaces/email.service.interface';
@@ -8,54 +8,50 @@ import { GetTemplateCommandOutput } from '@aws-sdk/client-ses';
 import { EmailSendDto } from 'src/modules/email/dtos/email.send.dto';
 import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { EmailTempPasswordDto } from 'src/modules/email/dtos/email.temp-password.dto';
-import { EmailWelcomeAdminDto } from 'src/modules/email/dtos/email.welcome-admin.dto';
-import { ENUM_HELPER_DATE_FORMAT } from 'src/common/helper/enums/helper.enum';
 import { AwsSESService } from 'src/modules/aws/services/aws.ses.service';
+import { EmailResetPasswordDto } from 'src/modules/email/dtos/email.reset-password.dto';
+import { EmailCreateDto } from 'src/modules/email/dtos/email.create.dto';
+import { EmailVerificationDto } from 'src/modules/email/dtos/email.verification.dto';
+import { EmailVerifiedDto } from 'src/modules/email/dtos/email.verified.dto';
+import { EmailMobileNumberVerifiedDto } from 'src/modules/email/dtos/email.mobile-number-verified.dto';
 
 @Injectable()
 export class EmailService implements IEmailService {
-    private readonly debug: boolean;
     private readonly logger = new Logger(EmailService.name);
 
     private readonly fromEmail: string;
     private readonly supportEmail: string;
 
-    private readonly appName: string;
-
-    private readonly clientUrl: string;
+    private readonly homeName: string;
+    private readonly homeUrl: string;
 
     constructor(
         private readonly awsSESService: AwsSESService,
         private readonly helperDateService: HelperDateService,
         private readonly configService: ConfigService
     ) {
-        this.debug = this.configService.get<boolean>('app.debug');
-
         this.fromEmail = this.configService.get<string>('email.fromEmail');
         this.supportEmail =
             this.configService.get<string>('email.supportEmail');
 
-        this.appName = this.configService.get<string>('app.name');
-
-        this.clientUrl = this.configService.get<string>('email.clientUrl');
+        this.homeName = this.configService.get<string>('home.name');
+        this.homeUrl = this.configService.get<string>('home.url');
     }
 
-    async createChangePassword(): Promise<boolean> {
+    async importChangePassword(): Promise<boolean> {
         try {
             await this.awsSESService.createTemplate({
-                name: ENUM_EMAIL.CHANGE_PASSWORD,
+                name: ENUM_SEND_EMAIL_PROCESS.CHANGE_PASSWORD,
                 subject: `Change Password`,
                 htmlBody: readFileSync(
-                    './src/modules/email/templates/email.change-password.template.html',
+                    `${__dirname}/../templates/change-password.template.html`,
                     'utf8'
                 ),
             });
 
             return true;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return false;
         }
@@ -63,21 +59,19 @@ export class EmailService implements IEmailService {
 
     async getChangePassword(): Promise<GetTemplateCommandOutput> {
         return this.awsSESService.getTemplate({
-            name: ENUM_EMAIL.CHANGE_PASSWORD,
+            name: ENUM_SEND_EMAIL_PROCESS.CHANGE_PASSWORD,
         });
     }
 
     async deleteChangePassword(): Promise<boolean> {
         try {
             await this.awsSESService.deleteTemplate({
-                name: ENUM_EMAIL.CHANGE_PASSWORD,
+                name: ENUM_SEND_EMAIL_PROCESS.CHANGE_PASSWORD,
             });
 
             return true;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return false;
         }
@@ -86,43 +80,39 @@ export class EmailService implements IEmailService {
     async sendChangePassword({ name, email }: EmailSendDto): Promise<boolean> {
         try {
             await this.awsSESService.send({
-                templateName: ENUM_EMAIL.CHANGE_PASSWORD,
+                templateName: ENUM_SEND_EMAIL_PROCESS.CHANGE_PASSWORD,
                 recipients: [email],
                 sender: this.fromEmail,
                 templateData: {
-                    appName: this.appName,
+                    homeName: this.homeName,
                     name: title(name),
                     supportEmail: this.supportEmail,
-                    clientUrl: this.clientUrl,
+                    homeUrl: this.homeUrl,
                 },
             });
 
             return true;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return false;
         }
     }
 
-    async createWelcome(): Promise<boolean> {
+    async importWelcome(): Promise<boolean> {
         try {
             await this.awsSESService.createTemplate({
-                name: ENUM_EMAIL.WELCOME,
+                name: ENUM_SEND_EMAIL_PROCESS.WELCOME,
                 subject: `Welcome`,
                 htmlBody: readFileSync(
-                    './src/modules/email/templates/email.welcome-new.template.html',
+                    `${__dirname}/../templates/welcome.template.html`,
                     'utf8'
                 ),
             });
 
             return true;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return false;
         }
@@ -130,149 +120,131 @@ export class EmailService implements IEmailService {
 
     async getWelcome(): Promise<GetTemplateCommandOutput> {
         return this.awsSESService.getTemplate({
-            name: ENUM_EMAIL.WELCOME,
+            name: ENUM_SEND_EMAIL_PROCESS.WELCOME,
         });
     }
 
     async deleteWelcome(): Promise<boolean> {
         try {
             await this.awsSESService.deleteTemplate({
-                name: ENUM_EMAIL.WELCOME,
+                name: ENUM_SEND_EMAIL_PROCESS.WELCOME,
             });
 
             return true;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return false;
         }
     }
 
     async sendWelcome({ name, email }: EmailSendDto): Promise<boolean> {
-        console.log('Email service send welcome');
-
         try {
             await this.awsSESService.send({
-                templateName: ENUM_EMAIL.WELCOME,
+                templateName: ENUM_SEND_EMAIL_PROCESS.WELCOME,
                 recipients: [email],
                 sender: this.fromEmail,
                 templateData: {
-                    appName: this.appName,
+                    homeName: this.homeName,
                     name: title(name),
                     email: title(email),
                     supportEmail: this.supportEmail,
-                    clientUrl: this.clientUrl,
+                    homeUrl: this.homeUrl,
                 },
             });
-            console.log('Email send successful');
+
             return true;
         } catch (err: unknown) {
-            console.log('Email send not successful');
-
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return false;
         }
     }
 
-    async createWelcomeAdmin(): Promise<boolean> {
+    async importCreate(): Promise<boolean> {
         try {
             await this.awsSESService.createTemplate({
-                name: ENUM_EMAIL.WELCOME_ADMIN,
-                subject: `Welcome`,
+                name: ENUM_SEND_EMAIL_PROCESS.CREATE,
+                subject: `Create`,
                 htmlBody: readFileSync(
-                    './src/modules/email/templates/email.welcome-admin.template.html',
+                    `${__dirname}/../templates/create.template.html`,
                     'utf8'
                 ),
             });
 
             return true;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return false;
         }
     }
 
-    async getWelcomeAdmin(): Promise<GetTemplateCommandOutput> {
+    async getCreate(): Promise<GetTemplateCommandOutput> {
         return this.awsSESService.getTemplate({
-            name: ENUM_EMAIL.WELCOME_ADMIN,
+            name: ENUM_SEND_EMAIL_PROCESS.CREATE,
         });
     }
 
-    async deleteWelcomeAdmin(): Promise<boolean> {
+    async deleteCreate(): Promise<boolean> {
         try {
             await this.awsSESService.deleteTemplate({
-                name: ENUM_EMAIL.WELCOME_ADMIN,
+                name: ENUM_SEND_EMAIL_PROCESS.CREATE,
             });
 
             return true;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return false;
         }
     }
 
-    async sendWelcomeAdmin(
+    async sendCreate(
         { name, email }: EmailSendDto,
-        { password: passwordString, passwordExpiredAt }: EmailWelcomeAdminDto
+        { password: passwordString, passwordExpiredAt }: EmailCreateDto
     ): Promise<boolean> {
         try {
             await this.awsSESService.send({
-                templateName: ENUM_EMAIL.WELCOME,
+                templateName: ENUM_SEND_EMAIL_PROCESS.WELCOME,
                 recipients: [email],
                 sender: this.fromEmail,
                 templateData: {
-                    appName: this.appName,
+                    homeName: this.homeName,
                     name: title(name),
                     email: title(email),
-                    password: passwordString,
                     supportEmail: this.supportEmail,
-                    clientUrl: this.clientUrl,
-                    passwordExpiredAt: this.helperDateService.format(
-                        passwordExpiredAt,
-                        {
-                            format: ENUM_HELPER_DATE_FORMAT.FRIENDLY_DATE_TIME,
-                        }
-                    ),
+                    homeUrl: this.homeUrl,
+                    password: passwordString,
+                    passwordExpiredAt:
+                        this.helperDateService.formatToRFC2822(
+                            passwordExpiredAt
+                        ),
                 },
             });
 
             return true;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return false;
         }
     }
 
-    async createTempPassword(): Promise<boolean> {
+    async importTempPassword(): Promise<boolean> {
         try {
             await this.awsSESService.createTemplate({
-                name: ENUM_EMAIL.TEMP_PASSWORD,
+                name: ENUM_SEND_EMAIL_PROCESS.TEMPORARY_PASSWORD,
                 subject: `Temporary Password`,
                 htmlBody: readFileSync(
-                    './src/modules/email/templates/email.temp-password.template.html',
+                    `${__dirname}/../templates/temp-password.template.html`,
                     'utf8'
                 ),
             });
 
             return true;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return false;
         }
@@ -281,14 +253,12 @@ export class EmailService implements IEmailService {
     async getTempPassword(): Promise<GetTemplateCommandOutput> {
         try {
             const template = await this.awsSESService.getTemplate({
-                name: ENUM_EMAIL.TEMP_PASSWORD,
+                name: ENUM_SEND_EMAIL_PROCESS.TEMPORARY_PASSWORD,
             });
 
             return template;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return;
         }
@@ -297,14 +267,12 @@ export class EmailService implements IEmailService {
     async deleteTempPassword(): Promise<boolean> {
         try {
             await this.awsSESService.deleteTemplate({
-                name: ENUM_EMAIL.TEMP_PASSWORD,
+                name: ENUM_SEND_EMAIL_PROCESS.TEMPORARY_PASSWORD,
             });
 
             return true;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
 
             return false;
         }
@@ -316,29 +284,291 @@ export class EmailService implements IEmailService {
     ): Promise<boolean> {
         try {
             await this.awsSESService.send({
-                templateName: ENUM_EMAIL.TEMP_PASSWORD,
+                templateName: ENUM_SEND_EMAIL_PROCESS.TEMPORARY_PASSWORD,
                 recipients: [email],
                 sender: this.fromEmail,
                 templateData: {
-                    appName: this.appName,
+                    homeName: this.homeName,
                     name: title(name),
                     password: passwordString,
                     supportEmail: this.supportEmail,
-                    clientUrl: this.clientUrl,
-                    passwordExpiredAt: this.helperDateService.format(
-                        passwordExpiredAt,
-                        {
-                            format: ENUM_HELPER_DATE_FORMAT.FRIENDLY_DATE_TIME,
-                        }
-                    ),
+                    homeUrl: this.homeUrl,
+                    passwordExpiredAt:
+                        this.helperDateService.formatToRFC2822(
+                            passwordExpiredAt
+                        ),
                 },
             });
 
             return true;
         } catch (err: unknown) {
-            if (this.debug) {
-                this.logger.error(err);
-            }
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async importResetPassword(): Promise<boolean> {
+        try {
+            await this.awsSESService.createTemplate({
+                name: ENUM_SEND_EMAIL_PROCESS.RESET_PASSWORD,
+                subject: `Reset Password`,
+                htmlBody: readFileSync(
+                    `${__dirname}/../templates/reset-password.template.html`,
+                    'utf8'
+                ),
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async getResetPassword(): Promise<GetTemplateCommandOutput> {
+        return this.awsSESService.getTemplate({
+            name: ENUM_SEND_EMAIL_PROCESS.RESET_PASSWORD,
+        });
+    }
+
+    async deleteResetPassword(): Promise<boolean> {
+        try {
+            await this.awsSESService.deleteTemplate({
+                name: ENUM_SEND_EMAIL_PROCESS.RESET_PASSWORD,
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async sendResetPassword(
+        { name, email }: EmailSendDto,
+        { expiredDate, url }: EmailResetPasswordDto
+    ): Promise<boolean> {
+        try {
+            await this.awsSESService.send({
+                templateName: ENUM_SEND_EMAIL_PROCESS.RESET_PASSWORD,
+                recipients: [email],
+                sender: this.fromEmail,
+                templateData: {
+                    homeName: this.homeName,
+                    name: title(name),
+                    supportEmail: this.supportEmail,
+                    homeUrl: this.homeUrl,
+                    url: `${this.homeUrl}/${url}`,
+                    expiredDate:
+                        this.helperDateService.formatToIsoDate(expiredDate),
+                },
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async importVerification(): Promise<boolean> {
+        try {
+            await this.awsSESService.createTemplate({
+                name: ENUM_SEND_EMAIL_PROCESS.VERIFICATION,
+                subject: `Email Verification`,
+                htmlBody: readFileSync(
+                    `${__dirname}/../templates/email-verification.template.html`,
+                    'utf8'
+                ),
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async getVerification(): Promise<GetTemplateCommandOutput> {
+        return this.awsSESService.getTemplate({
+            name: ENUM_SEND_EMAIL_PROCESS.VERIFICATION,
+        });
+    }
+
+    async deleteVerification(): Promise<boolean> {
+        try {
+            await this.awsSESService.deleteTemplate({
+                name: ENUM_SEND_EMAIL_PROCESS.VERIFICATION,
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async sendVerification(
+        { name, email }: EmailSendDto,
+        { expiredAt, reference, otp }: EmailVerificationDto
+    ): Promise<boolean> {
+        try {
+            await this.awsSESService.send({
+                templateName: ENUM_SEND_EMAIL_PROCESS.VERIFICATION,
+                recipients: [email],
+                sender: this.fromEmail,
+                templateData: {
+                    homeName: this.homeName,
+                    name: title(name),
+                    supportEmail: this.supportEmail,
+                    homeUrl: this.homeUrl,
+                    expiredAt:
+                        this.helperDateService.formatToIsoDate(expiredAt),
+                    otp,
+                    reference,
+                },
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async importEmailVerified(): Promise<boolean> {
+        try {
+            await this.awsSESService.createTemplate({
+                name: ENUM_SEND_EMAIL_PROCESS.EMAIL_VERIFIED,
+                subject: `Email Verified`,
+                htmlBody: readFileSync(
+                    `${__dirname}/../templates/email-verified.template.html`,
+                    'utf8'
+                ),
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async getEmailVerified(): Promise<GetTemplateCommandOutput> {
+        return this.awsSESService.getTemplate({
+            name: ENUM_SEND_EMAIL_PROCESS.EMAIL_VERIFIED,
+        });
+    }
+
+    async deleteEmailVerified(): Promise<boolean> {
+        try {
+            await this.awsSESService.deleteTemplate({
+                name: ENUM_SEND_EMAIL_PROCESS.EMAIL_VERIFIED,
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async sendEmailVerified(
+        { name, email }: EmailSendDto,
+        { reference }: EmailVerifiedDto
+    ): Promise<boolean> {
+        try {
+            await this.awsSESService.send({
+                templateName: ENUM_SEND_EMAIL_PROCESS.EMAIL_VERIFIED,
+                recipients: [email],
+                sender: this.fromEmail,
+                templateData: {
+                    homeName: this.homeName,
+                    name: title(name),
+                    supportEmail: this.supportEmail,
+                    homeUrl: this.homeUrl,
+                    reference,
+                },
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async importMobileNumberVerified(): Promise<boolean> {
+        try {
+            await this.awsSESService.createTemplate({
+                name: ENUM_SEND_EMAIL_PROCESS.MOBILE_NUMBER_VERIFIED,
+                subject: `MobileNumber Verified`,
+                htmlBody: readFileSync(
+                    `${__dirname}/../templates/mobile-number-verified.template.html`,
+                    'utf8'
+                ),
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async getMobileNumberVerified(): Promise<GetTemplateCommandOutput> {
+        return this.awsSESService.getTemplate({
+            name: ENUM_SEND_EMAIL_PROCESS.MOBILE_NUMBER_VERIFIED,
+        });
+    }
+
+    async deleteMobileNumberVerified(): Promise<boolean> {
+        try {
+            await this.awsSESService.deleteTemplate({
+                name: ENUM_SEND_EMAIL_PROCESS.MOBILE_NUMBER_VERIFIED,
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
+
+            return false;
+        }
+    }
+
+    async sendMobileNumberVerified(
+        { name, email }: EmailSendDto,
+        { reference, mobileNumber }: EmailMobileNumberVerifiedDto
+    ): Promise<boolean> {
+        try {
+            await this.awsSESService.send({
+                templateName: ENUM_SEND_EMAIL_PROCESS.MOBILE_NUMBER_VERIFIED,
+                recipients: [email],
+                sender: this.fromEmail,
+                templateData: {
+                    homeName: this.homeName,
+                    name: title(name),
+                    supportEmail: this.supportEmail,
+                    homeUrl: this.homeUrl,
+                    reference,
+                    mobileNumber,
+                },
+            });
+
+            return true;
+        } catch (err: unknown) {
+            this.logger.error(err);
 
             return false;
         }

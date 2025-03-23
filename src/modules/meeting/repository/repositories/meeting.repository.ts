@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { Model, PopulateOptions } from 'mongoose';
-import { DatabaseRepositoryAbstract } from 'src/common/database/abstracts/database.repository.abstract';
-import { DatabaseModel } from 'src/common/database/decorators/database.decorator';
+import { InjectDatabaseModel } from 'src/common/database/decorators/database.decorator';
 import { EventEntity } from 'src/modules/events/repository/entities/event.entity';
 import {
     MeetingDoc,
     MeetingEntity,
 } from 'src/modules/meeting/repository/entities/meeting.entity';
 import { UserEntity } from 'src/modules/user/repository/entities/user.entity';
+import { DatabaseRepositoryBase } from 'src/common/database/bases/database.repository';
 
 @Injectable()
-export class MeetingRepository extends DatabaseRepositoryAbstract<
+export class MeetingRepository extends DatabaseRepositoryBase<
     MeetingEntity,
     MeetingDoc
 > {
@@ -42,7 +42,7 @@ export class MeetingRepository extends DatabaseRepositoryAbstract<
     ];
 
     constructor(
-        @DatabaseModel(MeetingEntity.name)
+        @InjectDatabaseModel(MeetingEntity.name)
         private readonly bookingModel: Model<MeetingEntity>
     ) {
         super(bookingModel, [

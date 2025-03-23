@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Model, PopulateOptions } from 'mongoose';
-import { DatabaseRepositoryAbstract } from 'src/common/database/abstracts/database.repository.abstract';
-import { DatabaseModel } from 'src/common/database/decorators/database.decorator';
+import { DatabaseRepositoryBase } from 'src/common/database/bases/database.repository';
+import { InjectDatabaseModel } from 'src/common/database/decorators/database.decorator';
 import { CategoryEntity } from 'src/modules/category/repository/entities/category.entity';
 import { CountryEntity } from 'src/modules/country/repository/entities/country.entity';
 import { RoleEntity } from 'src/modules/role/repository/entities/role.entity';
@@ -11,7 +11,7 @@ import {
 } from 'src/modules/user/repository/entities/user.entity';
 
 @Injectable()
-export class UserRepository extends DatabaseRepositoryAbstract<
+export class UserRepository extends DatabaseRepositoryBase<
     UserEntity,
     UserDoc
 > {
@@ -50,7 +50,7 @@ export class UserRepository extends DatabaseRepositoryAbstract<
     ];
 
     constructor(
-        @DatabaseModel(UserEntity.name)
+        @InjectDatabaseModel(UserEntity.name)
         private readonly userModel: Model<UserEntity>
     ) {
         super(userModel, [

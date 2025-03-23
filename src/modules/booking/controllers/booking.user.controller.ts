@@ -12,27 +12,22 @@ import { IEventDoc } from 'src/modules/events/interfaces/event.interface';
 import { EventParsePipe } from 'src/modules/events/pipes/event.parse.pipe';
 import { EventDoc } from 'src/modules/events/repository/entities/event.entity';
 import { ENUM_MEETING_CALL_TYPE } from 'src/modules/meeting/enums/meeting.enum';
-import { UserService } from 'src/modules/user/services/user.service';
 import { v4 as uuidV4 } from 'uuid';
 import { ApiTags } from '@nestjs/swagger';
 import { ClientSession, Connection } from 'mongoose';
 import { ENUM_APP_STATUS_CODE_ERROR } from 'src/app/enums/app.status-code.enum';
-import { DatabaseConnection } from 'src/common/database/decorators/database.decorator';
 import { DatabaseIdResponseDto } from 'src/common/database/dtos/response/database.id.response.dto';
-import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { RequestRequiredPipe } from 'src/common/request/pipes/request.required.pipe';
 import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
 import {
     AuthJwtAccessProtected,
     AuthJwtPayload,
 } from 'src/modules/auth/decorators/auth.jwt.decorator';
-import { PaginationService } from 'src/common/pagination/services/pagination.service';
 import { AuthJwtAccessPayloadDto } from 'src/modules/auth/dtos/jwt/auth.jwt.access-payload.dto';
 import { CreateBookingValidation } from 'src/modules/booking/decorators/booking.common.decorator';
 import { BookingCreateRequestDto } from 'src/modules/booking/dtos/request/booking.create.request.dto';
 import { ENUM_BOOKING_STATUS_CODE_ERROR } from 'src/modules/booking/enums/booking.status-code.enum';
 import { BookingService } from 'src/modules/booking/services/booking.service';
-import { EventService } from 'src/modules/events/services/event.service';
 import { MeetingService } from 'src/modules/meeting/services/meeting.service';
 import {
     ENUM_POLICY_ACTION,
@@ -45,10 +40,10 @@ import {
 } from 'src/modules/policy/decorators/policy.decorator';
 import { Response } from 'src/common/response/decorators/response.decorator';
 import { IResponse } from 'src/common/response/interfaces/response.interface';
-import { ScheduleService } from 'src/modules/schedules/services/schedule.service';
-import { SlotService } from 'src/modules/slot/services/slot.service';
 import { IUserDoc } from 'src/modules/user/interfaces/user.interface';
 import { UserActiveParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
+import { InjectDatabaseConnection } from 'src/common/database/decorators/database.decorator';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 
 @ApiTags('modules.admin.category')
 @Controller({
@@ -57,15 +52,10 @@ import { UserActiveParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 })
 export class BookingUserController {
     constructor(
-        @DatabaseConnection() private readonly databaseConnection: Connection,
+        @InjectDatabaseConnection()
+        private readonly databaseConnection: Connection,
         private readonly bookingService: BookingService,
-        private readonly userService: UserService,
-        private readonly eventService: EventService,
-        private readonly slotService: SlotService,
-        private readonly scheduleService: ScheduleService,
-        private readonly meetingService: MeetingService,
-        private readonly helperDateService: HelperDateService,
-        private readonly paginationService: PaginationService
+        private readonly meetingService: MeetingService
     ) {}
 
     // region Create New Booking
@@ -76,6 +66,7 @@ export class BookingUserController {
         action: [ENUM_POLICY_ACTION.CREATE],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Post('/book/:event')

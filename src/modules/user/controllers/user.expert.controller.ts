@@ -16,6 +16,7 @@ import { ENUM_EXPERTISE_STATUS_CODE_ERROR } from 'src/modules/user/enums/user.st
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
 import { UserService } from 'src/modules/user/services/user.service';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 
 @ApiTags('modules.shared.user')
 @Controller({
@@ -52,6 +53,7 @@ export class UserExpertController {
     @Response('expert.updateExpertiseSuccess')
     @ExpertExpertiseUpdateValidation()
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.EXPERT)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Put('expertise/update')

@@ -8,7 +8,6 @@ import {
     QueryUsersResponse,
 } from '@stream-io/node-sdk';
 import { StreamResponse } from '@stream-io/node-sdk/dist/src/types';
-import { PaginationService } from 'src/common/pagination/services/pagination.service';
 import { RequestRequiredPipe } from 'src/common/request/pipes/request.required.pipe';
 import { Response } from 'src/common/response/decorators/response.decorator';
 import { IResponse } from 'src/common/response/interfaces/response.interface';
@@ -24,15 +23,7 @@ import {
 } from 'src/modules/policy/enums/policy.enum';
 import { ApiKeyProtected } from 'src/modules/api-key/decorators/api-key.decorator';
 import { AuthJwtAccessProtected } from 'src/modules/auth/decorators/auth.jwt.decorator';
-import { RoleService } from 'src/modules/role/services/role.service';
-import { AuthService } from 'src/modules/auth/services/auth.service';
-import { Connection } from 'mongoose';
-import { DatabaseConnection } from 'src/common/database/decorators/database.decorator';
-import { CountryService } from 'src/modules/country/services/country.service';
-import { UserService } from 'src/modules/user/services/user.service';
-import { Queue } from 'bullmq';
-import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
-import { WorkerQueue } from 'src/worker/decorators/worker.decorator';
+import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 
 @ApiTags('modules.admin.user')
 @Controller({
@@ -40,17 +31,7 @@ import { WorkerQueue } from 'src/worker/decorators/worker.decorator';
     path: '/meeting',
 })
 export class MeetingAdminController {
-    constructor(
-        @DatabaseConnection() private readonly databaseConnection: Connection,
-        @WorkerQueue(ENUM_WORKER_QUEUES.EMAIL_QUEUE)
-        private readonly emailQueue: Queue,
-        private readonly paginationService: PaginationService,
-        private readonly roleService: RoleService,
-        private readonly authService: AuthService,
-        private readonly userService: UserService,
-        private readonly meetingService: MeetingService,
-        private readonly countryService: CountryService
-    ) {}
+    constructor(private readonly meetingService: MeetingService) {}
 
     // region Get Server Rate Limit
     @Response('meeting.getServerRateLimit')
@@ -59,6 +40,7 @@ export class MeetingAdminController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('/get/rate-limit/server')
@@ -79,6 +61,7 @@ export class MeetingAdminController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('/get/async-task/:taskId')
@@ -100,6 +83,7 @@ export class MeetingAdminController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('/get/user/:userId')
@@ -121,6 +105,7 @@ export class MeetingAdminController {
         action: [ENUM_POLICY_ACTION.READ],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Get('/get/call/:callId')
@@ -142,6 +127,7 @@ export class MeetingAdminController {
         action: [ENUM_POLICY_ACTION.DELETE],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Delete('/calls/delete/:callId')
@@ -163,6 +149,7 @@ export class MeetingAdminController {
         action: [ENUM_POLICY_ACTION.DELETE],
     })
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
+    @UserProtected()
     @AuthJwtAccessProtected()
     @ApiKeyProtected()
     @Delete('/users/delete')

@@ -1,34 +1,39 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
+import { ActivityModule } from 'src/modules/activity/activity.module';
+import { ActivityAdminController } from 'src/modules/activity/controllers/activity.admin.controller';
 import { ApiKeyModule } from 'src/modules/api-key/api-key.module';
 import { ApiKeyAdminController } from 'src/modules/api-key/controllers/api-key.admin.controller';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { AuthAdminController } from 'src/modules/auth/controllers/auth.admin.controller';
-import { CategoryModule } from 'src/modules/category/category.module';
-import { CategoryAdminController } from 'src/modules/category/controllers/category.admin.controller';
-import { CountryAdminController } from 'src/modules/country/controllers/country.admin.controller';
 import { CountryModule } from 'src/modules/country/country.module';
 import { EmailModule } from 'src/modules/email/email.module';
-import { MeetingAdminController } from 'src/modules/meeting/controllers/meeting.admin.controller';
-import { MeetingModule } from 'src/modules/meeting/meeting.module';
+import { PasswordHistoryAdminController } from 'src/modules/password-history/controllers/password-history.admin.controller';
+import { PasswordHistoryModule } from 'src/modules/password-history/password-history.module';
 import { RoleAdminController } from 'src/modules/role/controllers/role.admin.controller';
 import { RoleModule } from 'src/modules/role/role.module';
-import { SettingAdminController } from 'src/modules/setting/controllers/setting.admin.controller';
+import { SessionAdminController } from 'src/modules/session/controllers/session.admin.controller';
+import { SessionModule } from 'src/modules/session/session.module';
 import { SettingModule } from 'src/modules/setting/setting.module';
 import { UserAdminController } from 'src/modules/user/controllers/user.admin.controller';
 import { UserModule } from 'src/modules/user/user.module';
-import { WORKER_CONNECTION_NAME } from 'src/worker/constants/worker.constant';
+import { VerificationModule } from 'src/modules/verification/verification.module';
 import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
+import { CategoryModule } from 'src/modules/category/category.module';
+import { MeetingModule } from 'src/modules/meeting/meeting.module';
+import { MeetingAdminController } from 'src/modules/meeting/controllers/meeting.admin.controller';
+import { CategoryAdminController } from 'src/modules/category/controllers/category.admin.controller';
 
 @Module({
     controllers: [
         ApiKeyAdminController,
-        SettingAdminController,
         RoleAdminController,
         UserAdminController,
-        CountryAdminController,
-        CategoryAdminController,
         AuthAdminController,
+        SessionAdminController,
+        PasswordHistoryAdminController,
+        ActivityAdminController,
+        CategoryAdminController,
         MeetingAdminController,
     ],
     providers: [],
@@ -41,13 +46,17 @@ import { ENUM_WORKER_QUEUES } from 'src/worker/enums/worker.enum';
         AuthModule,
         EmailModule,
         CountryModule,
+        SessionModule,
+        PasswordHistoryModule,
+        ActivityModule,
+        VerificationModule,
         CategoryModule,
         MeetingModule,
-        BullModule.registerQueue({
-            connection: {
-                name: WORKER_CONNECTION_NAME,
-            },
+        BullModule.registerQueueAsync({
             name: ENUM_WORKER_QUEUES.EMAIL_QUEUE,
+        }),
+        BullModule.registerQueueAsync({
+            name: ENUM_WORKER_QUEUES.SMS_QUEUE,
         }),
     ],
 })

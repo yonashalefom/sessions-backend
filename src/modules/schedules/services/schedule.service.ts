@@ -9,7 +9,6 @@ import {
     IDatabaseGetTotalOptions,
     IDatabaseOptions,
 } from 'src/common/database/interfaces/database.interface';
-import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
 import { ScheduleCreateRequestDto } from 'src/modules/schedules/dtos/request/schedule.create.request.dto';
 import {
@@ -23,12 +22,13 @@ import {
     ScheduleEntity,
 } from 'src/modules/schedules/repository/entities/schedule.entity';
 import { ScheduleRepository } from 'src/modules/schedules/repository/repositories/schedule.repository';
+import { HelperMomentDateService } from 'src/common/helper/services/helper.moment.date.service';
 
 @Injectable()
 export class ScheduleService implements IScheduleService {
     constructor(
         private readonly scheduleRepository: ScheduleRepository,
-        private readonly helperDateService: HelperDateService,
+        private readonly helperDateService: HelperMomentDateService,
         private readonly helperURLService: HelperURLService
     ) {}
 

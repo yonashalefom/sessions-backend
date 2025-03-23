@@ -17,7 +17,7 @@ import {
 import { RoleShortResponseDto } from 'src/modules/role/dtos/response/role.short.response.dto';
 import { RoleDoc } from 'src/modules/role/repository/entities/role.entity';
 import { RoleService } from 'src/modules/role/services/role.service';
-import { RoleSystemListDoc } from 'src/modules/role/docs/role.system.controller';
+import { RoleSystemListDoc } from 'src/modules/role/docs/role.system.doc';
 
 @ApiTags('modules.system.role')
 @Controller({
@@ -63,7 +63,7 @@ export class RoleSystemController {
             _limit
         );
         const mapRoles: RoleShortResponseDto[] =
-            await this.roleService.mapShort(roles);
+            this.roleService.mapShort(roles);
 
         return {
             _pagination: { total, totalPage },

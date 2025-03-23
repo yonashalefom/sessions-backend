@@ -1,4 +1,3 @@
-import { DatabaseEntityAbstract } from 'src/common/database/abstracts/database.entity.abstract';
 import {
     DatabaseEntity,
     DatabaseProp,
@@ -6,13 +5,14 @@ import {
 } from 'src/common/database/decorators/database.decorator';
 import { IDatabaseDocument } from 'src/common/database/interfaces/database.interface';
 import { UserEntity } from 'src/modules/user/repository/entities/user.entity';
+import { DatabaseEntityBase } from 'src/common/database/bases/database.entity';
 
 export type CallType = 'default';
 
 export const MeetingTableName = 'Meetings';
 
 @DatabaseEntity({ collection: MeetingTableName })
-export class MeetingEntity extends DatabaseEntityAbstract {
+export class MeetingEntity extends DatabaseEntityBase {
     @DatabaseProp({
         required: true,
         unique: true,
@@ -23,6 +23,7 @@ export class MeetingEntity extends DatabaseEntityAbstract {
     @DatabaseProp({
         required: true,
         trim: true,
+        type: String,
         maxlength: 25,
     })
     type: CallType;

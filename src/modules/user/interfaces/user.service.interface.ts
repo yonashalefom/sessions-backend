@@ -1,8 +1,10 @@
 import { IAuthPassword } from 'src/modules/auth/interfaces/auth.interface';
 import {
+    IDatabaseAggregateOptions,
     IDatabaseCreateOptions,
     IDatabaseDeleteManyOptions,
-    IDatabaseExistOptions,
+    IDatabaseExistsOptions,
+    IDatabaseFindAllAggregateOptions,
     IDatabaseFindAllOptions,
     IDatabaseGetTotalOptions,
     IDatabaseOptions,
@@ -31,6 +33,10 @@ import { AuthSignUpRequestDto } from 'src/modules/auth/dtos/request/auth.sign-up
 import { UserUpdateClaimUsernameRequestDto } from 'src/modules/user/dtos/request/user.update-claim-username.dto';
 import { DatabaseSoftDeleteDto } from 'src/common/database/dtos/database.soft-delete.dto';
 import { UserUpdateProfileRequestDto } from 'src/modules/user/dtos/request/user.update-profile.dto';
+import { UserUpdateStatusRequestDto } from 'src/modules/user/dtos/request/user.update-status.request.dto';
+import { PipelineStage } from 'mongoose';
+import { CountryDoc } from 'src/modules/country/repository/entities/country.entity';
+import { UserUploadPhotoRequestDto } from 'src/modules/user/dtos/request/user.upload-photo.request.dto';
 
 export interface IUserService {
     findAll(
@@ -41,6 +47,17 @@ export interface IUserService {
         find?: Record<string, any>,
         options?: IDatabaseGetTotalOptions
     ): Promise<number>;
+    createRawQueryFindAllWithRoleAndCountry(
+        find?: Record<string, any>
+    ): PipelineStage[];
+    findAllWithRoleAndCountry(
+        find?: Record<string, any>,
+        options?: IDatabaseFindAllAggregateOptions
+    ): Promise<IUserEntity[]>;
+    getTotalWithRoleAndCountry(
+        find?: Record<string, any>,
+        options?: IDatabaseAggregateOptions
+    ): Promise<number>;
     findOneById(_id: string, options?: IDatabaseOptions): Promise<UserDoc>;
     findOne(
         find: Record<string, any>,
@@ -48,13 +65,10 @@ export interface IUserService {
     ): Promise<UserDoc>;
     findOneByEmail(email: string, options?: IDatabaseOptions): Promise<UserDoc>;
     findOneByMobileNumber(
+        country: string,
         mobileNumber: string,
         options?: IDatabaseOptions
     ): Promise<UserDoc>;
-    findAllWithRoleAndCountry(
-        find?: Record<string, any>,
-        options?: IDatabaseFindAllOptions
-    ): Promise<IUserDoc[]>;
     findOneWithRoleAndCountry(
         find?: Record<string, any>,
         options?: IDatabaseFindAllOptions
@@ -80,6 +94,7 @@ export interface IUserService {
         options?: IDatabaseOptions
     ): Promise<IUserDoc>;
     findOneActiveByMobileNumber(
+        country: string,
         mobileNumber: string,
         options?: IDatabaseOptions
     ): Promise<IUserDoc>;
@@ -95,17 +110,17 @@ export interface IUserService {
         { passwordExpired, passwordHash, salt, passwordCreated }: IAuthPassword,
         options?: IDatabaseCreateOptions
     ): Promise<UserDoc>;
+    existByRole(
+        role: string,
+        options?: IDatabaseExistsOptions
+    ): Promise<boolean>;
     existByEmail(
         email: string,
-        options?: IDatabaseExistOptions
+        options?: IDatabaseExistsOptions
     ): Promise<boolean>;
     existByUsername(
         username: string,
-        options?: IDatabaseExistOptions
-    ): Promise<boolean>;
-    existByMobileNumber(
-        mobileNumber: string,
-        options?: IDatabaseExistOptions
+        options?: IDatabaseExistsOptions
     ): Promise<boolean>;
     updatePhoto(
         repository: UserDoc,
@@ -117,18 +132,11 @@ export interface IUserService {
         { passwordHash, passwordExpired, salt, passwordCreated }: IAuthPassword,
         options?: IDatabaseSaveOptions
     ): Promise<UserDoc>;
-    active(
+    updateStatus(
         repository: UserDoc,
+        { status }: UserUpdateStatusRequestDto,
         options?: IDatabaseSaveOptions
     ): Promise<UserEntity>;
-    inactive(
-        repository: UserDoc,
-        options?: IDatabaseSaveOptions
-    ): Promise<UserDoc>;
-    blocked(
-        repository: UserDoc,
-        options?: IDatabaseSaveOptions
-    ): Promise<UserDoc>;
     updatePasswordAttempt(
         repository: UserDoc,
         { passwordAttempt }: UserUpdatePasswordAttemptRequestDto,
@@ -166,7 +174,7 @@ export interface IUserService {
         repository: UserDoc,
         options?: IDatabaseSaveOptions
     ): Promise<UserDoc>;
-    delete(
+    softDelete(
         repository: UserDoc,
         dto: DatabaseSoftDeleteDto,
         options?: IDatabaseSaveOptions
@@ -177,18 +185,28 @@ export interface IUserService {
     ): Promise<boolean>;
     updateProfile(
         repository: UserDoc,
-        { country, name, address }: UserUpdateProfileRequestDto,
+        { country, name, gender }: UserUpdateProfileRequestDto,
+        options?: IDatabaseSaveOptions
+    ): Promise<UserDoc>;
+    updateVerificationEmail(
+        repository: UserDoc,
+        options?: IDatabaseSaveOptions
+    ): Promise<UserDoc>;
+    updateVerificationMobileNumber(
+        repository: UserDoc,
         options?: IDatabaseSaveOptions
     ): Promise<UserDoc>;
     join(repository: UserDoc): Promise<IUserDoc>;
-    getPhotoUploadPath(user: string): Promise<string>;
-    mapProfile(user: IUserDoc | IUserEntity): Promise<UserProfileResponseDto>;
-    createRandomFilenamePhoto(): Promise<string>;
-    createRandomUsername(): Promise<string>;
-    checkUsername(username: string): Promise<boolean>;
-    mapList(users: IUserDoc[] | IUserEntity[]): Promise<UserListResponseDto[]>;
-    mapShort(
-        users: IUserDoc[] | IUserEntity[]
-    ): Promise<UserShortResponseDto[]>;
-    mapGet(user: IUserDoc | IUserEntity): Promise<UserGetResponseDto>;
+    createRandomFilenamePhoto(
+        user: string,
+        { type }: UserUploadPhotoRequestDto
+    ): string;
+    createRandomUsername(): string;
+    checkUsernamePattern(username: string): boolean;
+    checkUsernameBadWord(username: string): Promise<boolean>;
+    mapProfile(user: IUserDoc | IUserEntity): UserProfileResponseDto;
+    mapList(users: IUserDoc[] | IUserEntity[]): UserListResponseDto[];
+    mapShort(users: IUserDoc[] | IUserEntity[]): UserShortResponseDto[];
+    mapGet(user: IUserDoc | IUserEntity): UserGetResponseDto;
+    checkMobileNumber(mobileNumber: string, country: CountryDoc): boolean;
 }

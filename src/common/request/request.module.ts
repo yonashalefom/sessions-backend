@@ -25,7 +25,6 @@ import {
     LessThanEqualOtherPropertyConstraint,
     LessThanOtherPropertyConstraint,
 } from 'src/common/request/validations/request.less-than-other-property.validation';
-import { SafeStringConstraint } from 'src/common/request/validations/request.safe-string.validation';
 
 @Module({})
 export class RequestModule {
@@ -44,13 +43,12 @@ export class RequestModule {
                         new ValidationPipe({
                             transform: true,
                             skipUndefinedProperties: true,
-                            forbidUnknownValues: false, // Set to false
-                            forbidNonWhitelisted: false, // Optional: Set to false to let Joi handle this
-                            whitelist: false, // Optional: Do not strip unknown properties, rely on Joi
+                            forbidUnknownValues: true,
                             errorHttpStatusCode:
                                 HttpStatus.UNPROCESSABLE_ENTITY,
-                            exceptionFactory: (errors: ValidationError[]) =>
-                                new RequestValidationException(errors),
+                            exceptionFactory: async (
+                                errors: ValidationError[]
+                            ) => new RequestValidationException(errors),
                         }),
                 },
                 DateGreaterThanEqualConstraint,
@@ -62,7 +60,6 @@ export class RequestModule {
                 IsPasswordConstraint,
                 LessThanEqualOtherPropertyConstraint,
                 LessThanOtherPropertyConstraint,
-                SafeStringConstraint,
             ],
             imports: [],
         };

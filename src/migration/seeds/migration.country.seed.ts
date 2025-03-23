@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
 import { Command } from 'nestjs-command';
-
-import { CountryCreateRequestDto } from 'src/modules/country/dtos/request/country.create.request.dto';
+import { Injectable } from '@nestjs/common';
 import { CountryService } from 'src/modules/country/services/country.service';
+import { CountryCreateRequestDto } from 'src/modules/country/dtos/request/country.create.request.dto';
 
 @Injectable()
 export class MigrationCountrySeed {
@@ -16,15 +15,15 @@ export class MigrationCountrySeed {
         try {
             const data: CountryCreateRequestDto[] = [
                 {
-                    name: 'Ethiopia',
-                    alpha2Code: 'ET',
-                    alpha3Code: 'ETH',
-                    domain: 'et',
-                    fipsCode: 'ET',
-                    numericCode: '231',
-                    phoneCode: ['251'],
-                    continent: 'Africa',
-                    timeZone: 'Africa/Addis_Ababa',
+                    name: 'Indonesia',
+                    alpha2Code: 'ID',
+                    alpha3Code: 'IDN',
+                    fipsCode: 'ID',
+                    numericCode: '360',
+                    phoneCode: ['62'],
+                    continent: 'Asia',
+                    timeZone: 'Asia/Jakarta',
+                    currency: 'IDR',
                 },
             ];
 

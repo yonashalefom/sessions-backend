@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker';
 import { ApiProperty, PickType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 import { UserCreateRequestDto } from 'src/modules/user/dtos/request/user.create.request.dto';
 
@@ -9,7 +8,7 @@ export class UserUpdateMobileNumberRequestDto extends PickType(
     ['country'] as const
 ) {
     @ApiProperty({
-        example: `8${faker.string.fromCharacters('1234567890', {
+        example: `628${faker.string.fromCharacters('1234567890', {
             min: 7,
             max: 11,
         })}`,
@@ -20,7 +19,6 @@ export class UserUpdateMobileNumberRequestDto extends PickType(
     @IsString()
     @IsNotEmpty()
     @MinLength(8)
-    @MaxLength(20)
-    @Type(() => String)
+    @MaxLength(22)
     number: string;
 }

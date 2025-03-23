@@ -1,16 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { Document } from 'mongoose';
+import { DatabaseHelperQueryContain } from 'src/common/database/decorators/database.decorator';
 import {
     IDatabaseCreateOptions,
-    IDatabaseExistOptions,
     IDatabaseFindAllOptions,
     IDatabaseGetTotalOptions,
     IDatabaseCreateManyOptions,
     IDatabaseSaveOptions,
-    IDatabaseOptions,
     IDatabaseDeleteManyOptions,
+    IDatabaseFindOneOptions,
+    IDatabaseOptions,
+    IDatabaseExistsOptions,
+    IDatabaseDeleteOptions,
 } from 'src/common/database/interfaces/database.interface';
+import { ENUM_POLICY_ROLE_TYPE } from 'src/modules/policy/enums/policy.enum';
 import { RoleCreateRequestDto } from 'src/modules/role/dtos/request/role.create.request.dto';
 import { RoleUpdateRequestDto } from 'src/modules/role/dtos/request/role.update.request.dto';
 import { RoleGetResponseDto } from 'src/modules/role/dtos/response/role.get.response.dto';
@@ -61,25 +65,49 @@ export class RoleService implements IRoleService {
         );
     }
 
+    async findAllActiveByType(
+        type: ENUM_POLICY_ROLE_TYPE,
+        options?: IDatabaseFindAllOptions
+    ): Promise<RoleDoc[]> {
+        return this.roleRepository.findAll({ type, isActive: true }, options);
+    }
+
+    async findAllByTypes(
+        types: ENUM_POLICY_ROLE_TYPE[],
+        options?: IDatabaseFindAllOptions
+    ): Promise<RoleDoc[]> {
+        return this.roleRepository.findAll(
+            {
+                type: {
+                    $in: types,
+                },
+            },
+            options
+        );
+    }
+
     async findOneById(
         _id: string,
-        options?: IDatabaseOptions
+        options?: IDatabaseFindOneOptions
     ): Promise<RoleDoc> {
         return this.roleRepository.findOneById(_id, options);
     }
 
     async findOne(
         find: Record<string, any>,
-        options?: IDatabaseOptions
+        options?: IDatabaseFindOneOptions
     ): Promise<RoleDoc> {
         return this.roleRepository.findOne(find, options);
     }
 
     async findOneByName(
         name: string,
-        options?: IDatabaseOptions
+        options?: IDatabaseFindOneOptions
     ): Promise<RoleDoc> {
-        return this.roleRepository.findOne({ name }, options);
+        return this.roleRepository.findOne(
+            DatabaseHelperQueryContain('name', name, { fullWord: true }),
+            options
+        );
     }
 
     async findOneByType(
@@ -91,19 +119,17 @@ export class RoleService implements IRoleService {
 
     async findOneActiveById(
         _id: string,
-        options?: IDatabaseOptions
+        options?: IDatabaseFindOneOptions
     ): Promise<RoleDoc> {
         return this.roleRepository.findOne({ _id, isActive: true }, options);
     }
 
     async existByName(
         name: string,
-        options?: IDatabaseExistOptions
+        options?: IDatabaseExistsOptions
     ): Promise<boolean> {
         return this.roleRepository.exists(
-            {
-                name,
-            },
+            DatabaseHelperQueryContain('name', name, { fullWord: true }),
             options
         );
     }
@@ -152,47 +178,44 @@ export class RoleService implements IRoleService {
         return this.roleRepository.save(repository, options);
     }
 
+    async delete(
+        repository: RoleDoc,
+        options?: IDatabaseDeleteOptions
+    ): Promise<boolean> {
+        await this.roleRepository.delete(repository, options);
+
+        return true;
+    }
+
     async deleteMany(
         find: Record<string, any>,
         options?: IDatabaseDeleteManyOptions
     ): Promise<boolean> {
-        try {
-            await this.roleRepository.deleteMany(find, options);
+        await this.roleRepository.deleteMany(find, options);
 
-            return true;
-        } catch (error: unknown) {
-            throw error;
-        }
+        return true;
     }
 
     async createMany(
         data: RoleCreateRequestDto[],
         options?: IDatabaseCreateManyOptions
     ): Promise<boolean> {
-        try {
-            const create: RoleEntity[] = data.map(
-                ({ type, name, permissions }) => {
-                    const entity: RoleEntity = new RoleEntity();
-                    entity.type = type;
-                    entity.isActive = true;
-                    entity.name = name;
-                    entity.permissions = permissions;
+        const create: RoleEntity[] = data.map(({ type, name, permissions }) => {
+            const entity: RoleEntity = new RoleEntity();
+            entity.type = type;
+            entity.isActive = true;
+            entity.name = name;
+            entity.permissions = permissions;
 
-                    return entity;
-                }
-            ) as RoleEntity[];
+            return entity;
+        }) as RoleEntity[];
 
-            await this.roleRepository.createMany<RoleEntity>(create, options);
+        await this.roleRepository.createMany<RoleEntity>(create, options);
 
-            return true;
-        } catch (error: unknown) {
-            throw error;
-        }
+        return true;
     }
 
-    async mapList(
-        roles: RoleDoc[] | RoleEntity[]
-    ): Promise<RoleListResponseDto[]> {
+    mapList(roles: RoleDoc[] | RoleEntity[]): RoleListResponseDto[] {
         return plainToInstance(
             RoleListResponseDto,
             roles.map((e: RoleDoc | RoleEntity) =>
@@ -201,16 +224,14 @@ export class RoleService implements IRoleService {
         );
     }
 
-    async mapGet(role: RoleDoc | RoleEntity): Promise<RoleGetResponseDto> {
+    mapGet(role: RoleDoc | RoleEntity): RoleGetResponseDto {
         return plainToInstance(
             RoleGetResponseDto,
             role instanceof Document ? role.toObject() : role
         );
     }
 
-    async mapShort(
-        roles: RoleDoc[] | RoleEntity[]
-    ): Promise<RoleShortResponseDto[]> {
+    mapShort(roles: RoleDoc[] | RoleEntity[]): RoleShortResponseDto[] {
         return plainToInstance(
             RoleShortResponseDto,
             roles.map((e: RoleDoc | RoleEntity) =>

@@ -5,7 +5,6 @@ import {
     Injectable,
 } from '@nestjs/common';
 import moment from 'moment-timezone';
-import { HelperDateService } from 'src/common/helper/services/helper.date.service';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
 import { BookingDoc } from 'src/modules/booking/repository/entities/booking.entity';
 import { BookingService } from 'src/modules/booking/services/booking.service';
@@ -16,17 +15,18 @@ import { ScheduleService } from 'src/modules/schedules/services/schedule.service
 import { SlotDto } from 'src/modules/slot/dtos/response/slot.get.response.dto';
 import { ENUM_SLOT_STATUS_CODE_ERROR } from 'src/modules/slot/enums/slot.status-code.enum';
 import { ISlotService } from 'src/modules/slot/interfaces/slot.service.interface';
-import { DateRange, DateRangeWithTimezone } from 'src/modules/slot/types/typs';
+import { DateRange, DateRangeWithTimezone } from 'src/modules/slot/types/types';
+import { HelperMomentDateService } from 'src/common/helper/services/helper.moment.date.service';
+
+export type WrapperType<T> = T; // WrapperType === Relation
 
 @Injectable()
 export class SlotService implements ISlotService {
     constructor(
         private readonly scheduleService: ScheduleService,
-        private readonly eventService: EventService,
         @Inject(forwardRef(() => BookingService))
-        private readonly bookingService: BookingService,
-        private readonly helperDateService: HelperDateService,
-        private readonly helperURLService: HelperURLService
+        private readonly bookingService: WrapperType<BookingService>,
+        private readonly helperDateService: HelperMomentDateService
     ) {}
 
     // region Check If Requested Date Range Is Valid

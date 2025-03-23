@@ -7,75 +7,67 @@ import {
     ResponseMetadataDto,
 } from 'src/common/response/dtos/response.dto';
 
-export class ResponsePagingMetadataRequestDto {
+export class ResponsePagingMetadataPaginationRequestDto {
     @ApiProperty({
         required: true,
-        nullable: false,
         example: faker.person.fullName(),
     })
     search: string;
 
     @ApiProperty({
         required: true,
-        nullable: false,
-        example: {},
     })
     filters: Record<
         string,
-        string | number | boolean | Array<string | number | boolean>
+        string | number | boolean | Array<string | number | boolean> | Date
     >;
 
     @ApiProperty({
         required: true,
-        nullable: false,
         example: 1,
     })
     page: number;
 
     @ApiProperty({
         required: true,
-        nullable: false,
         example: 20,
     })
     perPage: number;
 
     @ApiProperty({
         required: true,
-        nullable: false,
         example: 'createdAt',
     })
     orderBy: string;
 
     @ApiProperty({
         required: true,
-        nullable: false,
+        enum: ENUM_PAGINATION_ORDER_DIRECTION_TYPE,
         example: ENUM_PAGINATION_ORDER_DIRECTION_TYPE.ASC,
     })
     orderDirection: ENUM_PAGINATION_ORDER_DIRECTION_TYPE;
 
     @ApiProperty({
         required: true,
-        nullable: false,
         example: ['name'],
     })
     availableSearch: string[];
 
     @ApiProperty({
         required: true,
-        nullable: false,
+        isArray: true,
         example: ['name', 'createdAt'],
     })
     availableOrderBy: string[];
 
     @ApiProperty({
         required: true,
-        nullable: false,
+        enum: ENUM_PAGINATION_ORDER_DIRECTION_TYPE,
+        isArray: true,
         example: Object.values(ENUM_PAGINATION_ORDER_DIRECTION_TYPE),
     })
     availableOrderDirection: ENUM_PAGINATION_ORDER_DIRECTION_TYPE[];
-}
 
-export class ResponsePagingMetadataPaginationDto extends ResponsePagingMetadataRequestDto {
     @ApiProperty({
         required: false,
     })
@@ -90,9 +82,9 @@ export class ResponsePagingMetadataPaginationDto extends ResponsePagingMetadataR
 export class ResponsePagingMetadataDto extends ResponseMetadataDto {
     @ApiProperty({
         required: false,
-        type: ResponsePagingMetadataPaginationDto,
+        type: ResponsePagingMetadataPaginationRequestDto,
     })
-    pagination?: ResponsePagingMetadataPaginationDto;
+    pagination?: ResponsePagingMetadataPaginationRequestDto;
 }
 
 export class ResponsePagingDto extends PickType(ResponseDto, [
@@ -102,13 +94,12 @@ export class ResponsePagingDto extends PickType(ResponseDto, [
     @ApiProperty({
         name: '_metadata',
         required: true,
-        nullable: false,
         description: 'Contain metadata about API',
         type: ResponsePagingMetadataDto,
         example: {
             language: 'en',
             timestamp: 1660190937231,
-            timezone: 'Africa/Addis_Ababa',
+            timezone: 'Asia/Dubai',
             path: '/api/v1/test/hello',
             version: '1',
             repoVersion: '1.0.0',
@@ -133,7 +124,6 @@ export class ResponsePagingDto extends PickType(ResponseDto, [
     @ApiProperty({
         required: true,
         isArray: true,
-        default: [],
     })
     data: Record<string, any>[];
 }

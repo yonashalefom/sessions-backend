@@ -1,56 +1,59 @@
-import { Logger, VersioningType } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { NestApplication, NestFactory } from '@nestjs/core';
-import chalk from 'chalk';
-import { plainToInstance } from 'class-transformer';
-import { useContainer, validate } from 'class-validator';
+import './instrument';
 
+import { NestApplication, NestFactory } from '@nestjs/core';
+import { Logger, VersioningType } from '@nestjs/common';
 import { AppModule } from 'src/app/app.module';
-import { AppEnvDto } from 'src/app/dtos/app.env.dto';
-import { ENUM_APP_ENVIRONMENT } from 'src/app/enums/app.enum';
-import { MessageService } from 'src/common/message/services/message.service';
+import { ConfigService } from '@nestjs/config';
+import { useContainer, validate } from 'class-validator';
 import swaggerInit from 'src/swagger';
+import { plainToInstance } from 'class-transformer';
+import { AppEnvDto } from 'src/app/dtos/app.env.dto';
+import { MessageService } from 'src/common/message/services/message.service';
+import { ENUM_APP_ENVIRONMENT } from 'src/app/enums/app.enum';
+import compression from 'compression';
+import { Logger as PinoLogger } from 'nestjs-pino';
+import { NextFunction, Request } from 'express';
 
 async function bootstrap() {
     const app: NestApplication = await NestFactory.create(AppModule, {
-        abortOnError: false,
+        abortOnError: true,
+        bufferLogs: false,
     });
 
-    // region Configuration
     const configService = app.get(ConfigService);
-
+    const databaseUri: string = configService.get<string>('database.url');
     const env: string = configService.get<string>('app.env');
-    const databaseUri: string = configService.get<string>('database.uri');
     const timezone: string = configService.get<string>('app.timezone');
     const host: string = configService.get<string>('app.http.host');
-    const port: number =
-        env !== ENUM_APP_ENVIRONMENT.MIGRATION
-            ? configService.get<number>('app.http.port')
-            : 9999;
+    const port: number = configService.get<number>('app.http.port');
     const globalPrefix: string = configService.get<string>('app.globalPrefix');
     const versioningPrefix: string = configService.get<string>(
         'app.urlVersion.prefix'
     );
     const version: string = configService.get<string>('app.urlVersion.version');
 
-    // Enable/Disable API Endpoints
-    const httpEnable: boolean = configService.get<boolean>('app.http.enable');
+    // enable
     const versionEnable: string = configService.get<string>(
         'app.urlVersion.enable'
     );
-    const jobEnable: boolean = configService.get<boolean>('app.jobEnable');
 
-    const logger = new Logger('Sessions-Main');
+    const logger = new Logger('NestJs-Main');
     process.env.NODE_ENV = env;
     process.env.TZ = timezone;
 
-    // Global Prefix
+    // logger
+    app.useLogger(app.get(PinoLogger));
+
+    // Compression
+    app.use(compression());
+
+    // Global
     app.setGlobalPrefix(globalPrefix);
 
     // For Custom Validation
     useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-    // API Versioning
+    // Versioning
     if (versionEnable) {
         app.enableVersioning({
             type: VersioningType.URI,
@@ -58,7 +61,6 @@ async function bootstrap() {
             prefix: versioningPrefix,
         });
     }
-    // endregion
 
     // Validate Env
     const classEnv = plainToInstance(AppEnvDto, process.env);
@@ -66,79 +68,46 @@ async function bootstrap() {
     if (errors.length > 0) {
         const messageService = app.get(MessageService);
         const errorsMessage = messageService.setValidationMessage(errors);
-        logger.log(errorsMessage);
 
-        throw new Error(
-            'The .env file you are using is invalid. Please correct your .env file by comparing it with .env.example'
-        );
+        throw new Error('Env Variable Invalid', {
+            cause: errorsMessage,
+        });
     }
 
+    // Swagger
     await swaggerInit(app);
 
+    // set response for log
+    app.use(function (_: Request, res: any, next: NextFunction) {
+        const send = res.send;
+        res.send = function (body: any) {
+            res.body = body;
+            send.call(this, body);
+        };
+        next();
+    });
+
+    app.enableCors();
+
+    // Listen
     await app.listen(port, host);
-
-    logger.log(
-        chalk.cyan.bold(
-            `==========================================================`
-        )
-    );
-
-    logger.log(
-        chalk.cyan.bold('Environment Variable: ') +
-            chalk.magentaBright.bold(`${env}`)
-    );
-
-    // logger.log(JSON.parse(JSON.stringify(process.env)));
-
-    logger.log(
-        chalk.cyan.bold(
-            `==========================================================`
-        )
-    );
 
     if (env === ENUM_APP_ENVIRONMENT.MIGRATION) {
         logger.log(`On migrate the schema`);
 
         await app.close();
-
-        logger.log(`Migrate done`);
-        logger.log(
-            chalk.cyan.bold(
-                `==========================================================`
-            )
-        );
-
-        return;
+        process.exit(0);
     }
 
-    logger.log(
-        chalk.cyan.bold('Worker (Job) is: ') +
-            chalk.magentaBright.bold(`${jobEnable ? 'Active' : 'Inactive'}`)
-    );
-    logger.log(
-        chalk.cyan.bold('API Endpoints Are: ') +
-            chalk.magentaBright.bold(
-                `${httpEnable ? 'Active (Routes Accessible)' : 'Inactive (Routes Inaccessible)'}`
-            )
-    );
-    logger.log(
-        chalk.cyan.bold('Http Versioning Is: ') +
-            chalk.magentaBright.bold(`${versionEnable}`)
-    );
+    logger.log(`Http versioning is ${versionEnable}`);
 
     logger.log(
-        chalk.cyan.bold('Server running on: ') +
-            chalk.magentaBright.bold(`${await app.getUrl()}`)
+        `Http Server running on ${await app.getUrl()}`,
+        'NestApplication'
     );
-    logger.log(
-        chalk.cyan.bold('Database running on: ') +
-            chalk.magentaBright.bold(databaseUri)
-    );
+    logger.log(`Database uri ${databaseUri}`);
 
-    logger.log(
-        chalk.cyan.bold(
-            `==========================================================`
-        )
-    );
+    return;
 }
+
 bootstrap();

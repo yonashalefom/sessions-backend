@@ -1,21 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { DatabaseRepositoryAbstract } from 'src/common/database/abstracts/database.repository.abstract';
-import { DatabaseModel } from 'src/common/database/decorators/database.decorator';
+import { InjectDatabaseModel } from 'src/common/database/decorators/database.decorator';
 import {
     BookingDoc,
     BookingEntity,
 } from 'src/modules/booking/repository/entities/booking.entity';
 import { EventEntity } from 'src/modules/events/repository/entities/event.entity';
 import { UserEntity } from 'src/modules/user/repository/entities/user.entity';
+import { DatabaseRepositoryBase } from 'src/common/database/bases/database.repository';
 
 @Injectable()
-export class BookingRepository extends DatabaseRepositoryAbstract<
+export class BookingRepository extends DatabaseRepositoryBase<
     BookingEntity,
     BookingDoc
 > {
     constructor(
-        @DatabaseModel(BookingEntity.name)
+        @InjectDatabaseModel(BookingEntity.name)
         private readonly bookingModel: Model<BookingEntity>
     ) {
         super(bookingModel, [

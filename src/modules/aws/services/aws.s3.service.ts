@@ -1,10 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Readable } from 'stream';
 import {
     S3Client,
     GetObjectCommand,
-    ListBucketsCommand,
     ListObjectsV2Command,
     PutObjectCommand,
     DeleteObjectCommand,
@@ -19,9 +17,6 @@ import {
     GetObjectCommandInput,
     AbortMultipartUploadCommand,
     AbortMultipartUploadCommandInput,
-    HeadBucketCommand,
-    HeadBucketCommandOutput,
-    ListBucketsOutput,
     ListObjectsV2Output,
     GetObjectOutput,
     DeleteObjectsCommandInput,
@@ -30,9 +25,6 @@ import {
     DeleteObjectsCommandOutput,
     DeleteObjectCommandInput,
     DeleteObjectCommandOutput,
-    HeadBucketCommandInput,
-    ListBucketsCommandInput,
-    ListBucketsCommandOutput,
     GetObjectCommandOutput,
     PutObjectCommandInput,
     PutObjectCommandOutput,
@@ -40,19 +32,27 @@ import {
     UploadPartCommandOutput,
     CompleteMultipartUploadCommandOutput,
     AbortMultipartUploadCommandOutput,
-    Bucket,
     _Object,
     ObjectCannedACL,
-    CompletedPart,
+    HeadObjectCommand,
+    HeadObjectCommandInput,
+    HeadObjectCommandOutput,
+    NoSuchKey,
+    HeadBucketCommandOutput,
+    HeadBucketCommand,
+    HeadBucketCommandInput,
+    ListBucketsCommand,
 } from '@aws-sdk/client-s3';
 import { IAwsS3Service } from 'src/modules/aws/interfaces/aws.s3-service.interface';
 import { AwsS3Dto } from 'src/modules/aws/dtos/aws.s3.dto';
 import {
+    IAwsS3Config,
+    IAwsS3DeleteDirOptions,
+    IAwsS3GetItemsOptions,
+    IAwsS3Options,
+    IAwsS3PresignOptions,
     IAwsS3PutItem,
-    IAwsS3PutItemOptions,
     IAwsS3PutItemWithAclOptions,
-    IAwsS3PutPresignUrlFile,
-    IAwsS3PutPresignUrlOptions,
 } from 'src/modules/aws/interfaces/aws.interface';
 import {
     AwsS3MultipartDto,
@@ -60,353 +60,394 @@ import {
 } from 'src/modules/aws/dtos/aws.s3-multipart.dto';
 import { AWS_S3_MAX_PART_NUMBER } from 'src/modules/aws/constants/aws.constant';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { AwsS3PresignUrlDto } from 'src/modules/aws/dtos/aws.s3-presign-url.dto';
+import { ENUM_AWS_S3_ACCESSIBILITY } from 'src/modules/aws/enums/aws.enum';
+import { FILE_SIZE_IN_BYTES } from 'src/common/file/constants/file.constant';
+import { AwsS3PresignResponseDto } from 'src/modules/aws/dtos/response/aws.s3-presign.response.dto';
+import { AwsS3PresignRequestDto } from 'src/modules/aws/dtos/request/aws.s3-presign.request.dto';
+import { AwsS3ResponseDto } from 'src/modules/aws/dtos/response/aws.s3-response.dto';
+import { plainToInstance } from 'class-transformer';
+import { AwsS3PresignMultiPartResponseDto } from 'src/modules/aws/dtos/response/aws.s3-presign-multipart.response.dto';
 
 @Injectable()
-export class AwsS3Service implements IAwsS3Service {
-    private readonly s3Client: S3Client;
-    private readonly bucket: string;
-    private readonly baseUrl: string;
-    private readonly presignUrlExpired: number;
+export class AwsS3Service implements OnModuleInit, IAwsS3Service {
+    private readonly presignExpired: number;
+    private config: IAwsS3Config;
 
     constructor(private readonly configService: ConfigService) {
-        this.s3Client = new S3Client({
+        this.presignExpired = this.configService.get<number>(
+            'aws.s3.presignExpired'
+        );
+        this.config = this.configService.get<IAwsS3Config>('aws.s3.config');
+    }
+
+    onModuleInit(): void {
+        this.config.public.client = new S3Client({
             credentials: {
-                accessKeyId: this.configService.get<string>(
-                    'aws.s3.credential.key'
-                ),
-                secretAccessKey: this.configService.get<string>(
-                    'aws.s3.credential.secret'
-                ),
+                accessKeyId: this.config.public.credential.key,
+                secretAccessKey: this.config.public.credential.secret,
             },
-            region: this.configService.get<string>('aws.s3.region'),
+            region: this.config.public.region,
         });
 
-        this.bucket = this.configService.get<string>('aws.s3.bucket');
-        this.baseUrl = this.configService.get<string>('aws.s3.baseUrl');
-        this.presignUrlExpired = this.configService.get<number>(
-            'aws.s3.presignUrlExpired'
-        );
+        this.config.private.client = new S3Client({
+            credentials: {
+                accessKeyId: this.config.private.credential.key,
+                secretAccessKey: this.config.private.credential.secret,
+            },
+            region: this.config.private.region,
+        });
     }
 
-    async checkBucketExistence(): Promise<HeadBucketCommandOutput> {
+    getConfig(options?: IAwsS3Options) {
+        return options?.access === ENUM_AWS_S3_ACCESSIBILITY.PRIVATE
+            ? this.config.private
+            : this.config.public;
+    }
+
+    getFileInfo(key: string) {
+        const pathWithFilename: string = `/${key}`;
+        const filename: string = key.substring(
+            key.lastIndexOf('/') + 1,
+            key.length
+        );
+        const mime: string = filename.substring(
+            filename.lastIndexOf('.') + 1,
+            filename.length
+        );
+        return { pathWithFilename, filename, mime };
+    }
+
+    async checkConnection(options?: IAwsS3Options): Promise<boolean> {
+        const config = this.getConfig(options);
+        try {
+            await config.client.send(new ListBucketsCommand({}));
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    async checkBucket(options?: IAwsS3Options): Promise<boolean> {
+        const config = this.getConfig(options);
         const command: HeadBucketCommand = new HeadBucketCommand({
-            Bucket: this.bucket,
+            Bucket: config.bucket,
         });
-
-        try {
-            const check = await this.s3Client.send<
-                HeadBucketCommandInput,
-                HeadBucketCommandOutput
-            >(command);
-            return check;
-        } catch (err: any) {
-            throw err;
-        }
+        await config.client.send<
+            HeadBucketCommandInput,
+            HeadBucketCommandOutput
+        >(command);
+        return true;
     }
 
-    async listBucket(): Promise<string[]> {
-        const command: ListBucketsCommand = new ListBucketsCommand({});
-
-        try {
-            const listBucket: ListBucketsOutput = await this.s3Client.send<
-                ListBucketsCommandInput,
-                ListBucketsCommandOutput
-            >(command);
-            const mapList: string[] = listBucket.Buckets.map(
-                (val: Bucket) => val.Name
-            );
-            return mapList;
-        } catch (err: any) {
-            throw err;
+    async checkItem(key: string, options?: IAwsS3Options): Promise<AwsS3Dto> {
+        if (key.startsWith('/')) {
+            throw new Error('Key should not start with "/"');
         }
-    }
 
-    async listItemInBucket(path?: string): Promise<AwsS3Dto[]> {
-        const command: ListObjectsV2Command = new ListObjectsV2Command({
-            Bucket: this.bucket,
-            Prefix: path,
-        });
-
-        try {
-            const listItems: ListObjectsV2Output = await this.s3Client.send<
-                ListObjectsV2CommandInput,
-                ListObjectsV2CommandOutput
-            >(command);
-
-            const mapList = listItems.Contents.map((val: _Object) => {
-                const lastIndex: number = val.Key.lastIndexOf('/');
-                const path: string = val.Key.substring(0, lastIndex);
-                const filename: string = val.Key.substring(
-                    lastIndex + 1,
-                    val.Key.length
-                );
-                const mime: string = filename.substring(
-                    filename.lastIndexOf('.') + 1,
-                    filename.length
-                );
-
-                return {
-                    bucket: this.bucket,
-                    path,
-                    pathWithFilename: val.Key,
-                    filename: filename,
-                    completedUrl: `${this.baseUrl}${val.Key}`,
-                    baseUrl: this.baseUrl,
-                    mime,
-                    size: val.Size,
-                };
-            });
-
-            return mapList;
-        } catch (err: any) {
-            throw err;
-        }
-    }
-
-    async getItemInBucket(
-        pathWithFilename: string
-    ): Promise<Readable | ReadableStream<any> | Blob> {
-        const command: GetObjectCommand = new GetObjectCommand({
-            Bucket: this.bucket,
-            Key: pathWithFilename,
-        });
-
-        try {
-            const item: GetObjectOutput = await this.s3Client.send<
-                GetObjectCommandInput,
-                GetObjectCommandOutput
-            >(command);
-            return item.Body;
-        } catch (err: any) {
-            throw err;
-        }
-    }
-
-    async putItemInBucket(
-        file: IAwsS3PutItem,
-        options?: IAwsS3PutItemOptions
-    ): Promise<AwsS3Dto> {
-        const path: string = `/${options?.path?.replace(/^\/*|\/*$/g, '') ?? ''}`;
-        const mime: string = file.originalname.substring(
-            file.originalname.lastIndexOf('.') + 1,
-            file.originalname.length
-        );
-        const filename = options?.customFilename
-            ? `${options?.customFilename.replace(/^\/*|\/*$/g, '')}.${mime}`
-            : file.originalname.replace(/^\/*|\/*$/g, '');
-        const content: string | Uint8Array | Buffer = file.buffer;
-        const key: string =
-            path === '/' ? `${path}${filename}` : `${path}/${filename}`;
-        const command: PutObjectCommand = new PutObjectCommand({
-            Bucket: this.bucket,
+        const config = this.getConfig(options);
+        const headCommand = new HeadObjectCommand({
+            Bucket: config.bucket,
             Key: key,
+        });
+        const item = await config.client.send<
+            HeadObjectCommandInput,
+            HeadObjectCommandOutput
+        >(headCommand);
+        const { pathWithFilename, mime } = this.getFileInfo(key);
+
+        return {
+            bucket: config.bucket,
+            key,
+            completedUrl: `${config.baseUrl}${pathWithFilename}`,
+            cdnUrl: config.cdnUrl
+                ? `${config.cdnUrl}${pathWithFilename}`
+                : undefined,
+            mime,
+            size: item.ContentLength,
+        };
+    }
+
+    async getItems(
+        path: string,
+        options?: IAwsS3GetItemsOptions
+    ): Promise<AwsS3Dto[]> {
+        if (path.startsWith('/')) {
+            throw new Error('Path should not start with "/"');
+        }
+
+        const config = this.getConfig(options);
+        const command: ListObjectsV2Command = new ListObjectsV2Command({
+            Bucket: config.bucket,
+            Prefix: path,
+            MaxKeys: 1000,
+            ContinuationToken: options?.continuationToken,
+        });
+
+        const listItems: ListObjectsV2Output = await config.client.send<
+            ListObjectsV2CommandInput,
+            ListObjectsV2CommandOutput
+        >(command);
+        const mapList: AwsS3Dto[] = listItems.Contents.map((item: _Object) => {
+            const { pathWithFilename, mime } = this.getFileInfo(item.Key);
+            return {
+                bucket: config.bucket,
+                key: item.Key,
+                completedUrl: `${config.baseUrl}${pathWithFilename}`,
+                cdnUrl: config.cdnUrl
+                    ? `${config.cdnUrl}${pathWithFilename}`
+                    : undefined,
+                baseUrl: config.baseUrl,
+                mime,
+                size: item.Size,
+            };
+        });
+
+        if (listItems.IsTruncated) {
+            const nextItems: AwsS3Dto[] = await this.getItems(path, {
+                ...options,
+                continuationToken: listItems.NextContinuationToken,
+            });
+            mapList.push(...nextItems);
+        }
+
+        if (listItems.CommonPrefixes) {
+            for (const dir of listItems.CommonPrefixes) {
+                const dirItems = await this.getItems(dir.Prefix, {
+                    access: options?.access,
+                });
+                mapList.push(...dirItems);
+            }
+        }
+
+        return mapList;
+    }
+
+    async getItem(key: string, options?: IAwsS3Options): Promise<AwsS3Dto> {
+        if (key.startsWith('/')) {
+            throw new Error('Key should not start with "/"');
+        }
+
+        const config = this.getConfig(options);
+        const command: GetObjectCommand = new GetObjectCommand({
+            Bucket: config.bucket,
+            Key: key,
+        });
+        const item: GetObjectOutput = await config.client.send<
+            GetObjectCommandInput,
+            GetObjectCommandOutput
+        >(command);
+        const { pathWithFilename, mime } = this.getFileInfo(key);
+
+        return {
+            bucket: config.bucket,
+            key,
+            completedUrl: `${config.baseUrl}${pathWithFilename}`,
+            cdnUrl: config.cdnUrl
+                ? `${config.cdnUrl}${pathWithFilename}`
+                : undefined,
+            mime,
+            data: item.Body,
+            size: item.ContentLength,
+        };
+    }
+
+    async putItem(
+        file: IAwsS3PutItem,
+        options?: IAwsS3Options
+    ): Promise<AwsS3Dto> {
+        if (file.key.startsWith('/')) {
+            throw new Error('Key should not start with "/"');
+        } else if (!file.file) {
+            throw new Error('File is required');
+        }
+
+        const config = this.getConfig(options);
+        const { pathWithFilename, mime } = this.getFileInfo(file.key);
+        const content: Buffer = file.file;
+        const command: PutObjectCommand = new PutObjectCommand({
+            Bucket: config.bucket,
+            Key: file.key,
             Body: content,
         });
 
-        try {
-            await this.s3Client.send<
-                PutObjectCommandInput,
-                PutObjectCommandOutput
-            >(command);
+        await config.client.send<PutObjectCommandInput, PutObjectCommandOutput>(
+            command
+        );
 
-            return {
-                bucket: this.bucket,
-                path,
-                pathWithFilename: key,
-                filename: filename,
-                completedUrl: `${this.baseUrl}${key}`,
-                baseUrl: this.baseUrl,
-                mime,
-                size: file.size,
-            };
-        } catch (err: any) {
-            throw err;
-        }
+        return {
+            bucket: config.bucket,
+            key: file.key,
+            completedUrl: `${config.baseUrl}${pathWithFilename}`,
+            cdnUrl: config.cdnUrl
+                ? `${config.cdnUrl}${pathWithFilename}`
+                : undefined,
+            mime,
+            size: file?.size,
+            duration: file?.duration,
+        };
     }
 
-    async putItemInBucketWithAcl(
+    async putItemWithAcl(
         file: IAwsS3PutItem,
         options?: IAwsS3PutItemWithAclOptions
     ): Promise<AwsS3Dto> {
-        const path: string = `/${options?.path?.replace(/^\/*|\/*$/g, '') ?? ''}`;
-        const acl: ObjectCannedACL = options?.acl
-            ? (options.acl as ObjectCannedACL)
-            : ObjectCannedACL.public_read;
+        if (file.key.startsWith('/')) {
+            throw new Error('Key should not start with "/"');
+        } else if (!file.file) {
+            throw new Error('File is required');
+        }
 
-        const mime: string = file.originalname.substring(
-            file.originalname.lastIndexOf('.') + 1,
-            file.originalname.length
-        );
-        const filename = options?.customFilename
-            ? `${options?.customFilename.replace(/^\/*|\/*$/g, '')}.${mime}`
-            : file.originalname.replace(/^\/*|\/*$/g, '');
-        const content: string | Uint8Array | Buffer = file.buffer;
-
-        const key: string =
-            path === '/' ? `${path}${filename}` : `${path}/${filename}`;
+        const config = this.getConfig(options);
+        const { pathWithFilename, mime } = this.getFileInfo(file.key);
+        const content: Buffer = file.file;
         const command: PutObjectCommand = new PutObjectCommand({
-            Bucket: this.bucket,
-            Key: key,
+            Bucket: config.bucket,
+            Key: file.key,
             Body: content,
-            ACL: acl,
+            ACL: options?.acl ?? ObjectCannedACL.public_read,
         });
 
-        try {
-            await this.s3Client.send<
-                PutObjectCommandInput,
-                PutObjectCommandOutput
-            >(command);
-
-            return {
-                bucket: this.bucket,
-                path,
-                pathWithFilename: key,
-                filename: filename,
-                completedUrl: `${this.baseUrl}${key}`,
-                baseUrl: this.baseUrl,
-                mime,
-                size: file.size,
-            };
-        } catch (err: any) {
-            throw err;
-        }
-    }
-
-    async deleteItemInBucket(pathWithFilename: string): Promise<void> {
-        const command: DeleteObjectCommand = new DeleteObjectCommand({
-            Bucket: this.bucket,
-            Key: pathWithFilename,
-        });
-
-        try {
-            await this.s3Client.send<
-                DeleteObjectCommandInput,
-                DeleteObjectCommandOutput
-            >(command);
-            return;
-        } catch (err: any) {
-            throw err;
-        }
-    }
-
-    async deleteItemsInBucket(pathWithFilename: string[]): Promise<void> {
-        const keys: ObjectIdentifier[] = pathWithFilename.map(
-            (val: string) => ({
-                Key: val,
-            })
+        await config.client.send<PutObjectCommandInput, PutObjectCommandOutput>(
+            command
         );
-        const command: DeleteObjectsCommand = new DeleteObjectsCommand({
-            Bucket: this.bucket,
-            Delete: {
-                Objects: keys,
-            },
-        });
 
-        try {
-            await this.s3Client.send<
-                DeleteObjectsCommandInput,
-                DeleteObjectsCommandOutput
-            >(command);
-            return;
-        } catch (err: any) {
-            throw err;
-        }
+        return {
+            bucket: config.bucket,
+            key: file.key,
+            completedUrl: `${config.baseUrl}${pathWithFilename}`,
+            cdnUrl: config.cdnUrl
+                ? `${config.cdnUrl}${pathWithFilename}`
+                : undefined,
+            mime,
+            size: file?.size,
+            duration: file?.duration,
+        };
     }
 
-    async deleteFolder(dir: string): Promise<void> {
-        const commandList: ListObjectsV2Command = new ListObjectsV2Command({
-            Bucket: this.bucket,
-            Prefix: dir,
-        });
-        const lists = await this.s3Client.send<
-            ListObjectsV2CommandInput,
-            ListObjectsV2CommandOutput
-        >(commandList);
-
-        try {
-            const listItems = lists.Contents.map(val => ({
-                Key: val.Key,
-            }));
-            const commandDeleteItems: DeleteObjectsCommand =
-                new DeleteObjectsCommand({
-                    Bucket: this.bucket,
-                    Delete: {
-                        Objects: listItems,
-                    },
-                });
-
-            await this.s3Client.send<
-                DeleteObjectsCommandInput,
-                DeleteObjectsCommandOutput
-            >(commandDeleteItems);
-
-            const commandDelete: DeleteObjectCommand = new DeleteObjectCommand({
-                Bucket: this.bucket,
-                Key: dir,
-            });
-            await this.s3Client.send<
-                DeleteObjectCommandInput,
-                DeleteObjectCommandOutput
-            >(commandDelete);
-
-            return;
-        } catch (err: any) {
-            throw err;
+    async deleteItem(key: string, options?: IAwsS3Options): Promise<void> {
+        if (key.startsWith('/')) {
+            throw new Error('Key should not start with "/"');
         }
+
+        const config = this.getConfig(options);
+        const command: DeleteObjectCommand = new DeleteObjectCommand({
+            Bucket: config.bucket,
+            Key: key,
+        });
+
+        await config.client.send<
+            DeleteObjectCommandInput,
+            DeleteObjectCommandOutput
+        >(command);
+    }
+
+    async deleteItems(keys: string[], options?: IAwsS3Options): Promise<void> {
+        if (keys.some(e => e.startsWith('/'))) {
+            throw new Error('Keys should not start with "/"');
+        }
+
+        const config = this.getConfig(options);
+        const obj: ObjectIdentifier[] = keys.map((val: string) => ({
+            Key: val,
+        }));
+        const command: DeleteObjectsCommand = new DeleteObjectsCommand({
+            Bucket: config.bucket,
+            Delete: { Objects: obj },
+        });
+
+        await config.client.send<
+            DeleteObjectsCommandInput,
+            DeleteObjectsCommandOutput
+        >(command);
+    }
+
+    async deleteDir(
+        path: string,
+        options?: IAwsS3DeleteDirOptions
+    ): Promise<void | _Object[]> {
+        if (path.startsWith('/')) {
+            throw new Error('Path should not start with "/"');
+        }
+
+        const config = this.getConfig(options);
+        let continuationToken: string | undefined = undefined;
+
+        do {
+            const listCommand: ListObjectsV2Command = new ListObjectsV2Command({
+                Bucket: config.bucket,
+                Prefix: path,
+                MaxKeys: 1000,
+                ContinuationToken: continuationToken,
+            });
+
+            const listItems: ListObjectsV2Output = await config.client.send<
+                ListObjectsV2CommandInput,
+                ListObjectsV2CommandOutput
+            >(listCommand);
+
+            if (listItems.Contents && listItems.Contents.length > 0) {
+                const deleteObjectsCommand: DeleteObjectsCommand =
+                    new DeleteObjectsCommand({
+                        Bucket: config.bucket,
+                        Delete: {
+                            Objects: listItems.Contents.map(item => ({
+                                Key: item.Key,
+                            })),
+                        },
+                    });
+
+                await config.client.send<
+                    DeleteObjectsCommandInput,
+                    DeleteObjectsCommandOutput
+                >(deleteObjectsCommand);
+            }
+
+            continuationToken = listItems.NextContinuationToken;
+        } while (continuationToken);
     }
 
     async createMultiPart(
         file: IAwsS3PutItem,
         maxPartNumber: number,
-        options?: IAwsS3PutItemOptions
+        options?: IAwsS3Options
     ): Promise<AwsS3MultipartDto> {
-        if (maxPartNumber > AWS_S3_MAX_PART_NUMBER) {
+        if (file.key.startsWith('/')) {
+            throw new Error('Key should not start with "/"');
+        } else if (maxPartNumber > AWS_S3_MAX_PART_NUMBER) {
             throw new Error(
                 `Max part number is greater than ${AWS_S3_MAX_PART_NUMBER}`
             );
         }
 
-        const path: string = `/${options?.path?.replace(/^\/*|\/*$/g, '') ?? ''}`;
-        const mime: string = file.originalname.substring(
-            file.originalname.lastIndexOf('.') + 1,
-            file.originalname.length
-        );
-        const filename = options?.customFilename
-            ? `${options?.customFilename.replace(/^\/*|\/*$/g, '')}.${mime}`
-            : file.originalname.replace(/^\/*|\/*$/g, '');
+        const config = this.getConfig(options);
+        const { pathWithFilename, mime } = this.getFileInfo(file.key);
 
-        const key: string =
-            path === '/' ? `${path}${filename}` : `${path}/${filename}`;
         const multiPartCommand: CreateMultipartUploadCommand =
             new CreateMultipartUploadCommand({
-                Bucket: this.bucket,
-                Key: key,
+                Bucket: config.bucket,
+                Key: file.key,
             });
 
-        try {
-            const response = await this.s3Client.send<
-                CreateMultipartUploadCommandInput,
-                CreateMultipartUploadCommandOutput
-            >(multiPartCommand);
+        const response = await config.client.send<
+            CreateMultipartUploadCommandInput,
+            CreateMultipartUploadCommandOutput
+        >(multiPartCommand);
 
-            return {
-                bucket: this.bucket,
-                uploadId: response.UploadId,
-                path,
-                pathWithFilename: key,
-                filename: filename,
-                completedUrl: `${this.baseUrl}${key}`,
-                baseUrl: this.baseUrl,
-                mime,
-                size: 0,
-                lastPartNumber: 0,
-                maxPartNumber: maxPartNumber,
-                parts: [],
-            };
-        } catch (err: any) {
-            throw err;
-        }
+        return {
+            bucket: config.bucket,
+            uploadId: response.UploadId,
+            key: file.key,
+            completedUrl: `${config.baseUrl}${pathWithFilename}`,
+            cdnUrl: config.cdnUrl
+                ? `${config.cdnUrl}${pathWithFilename}`
+                : undefined,
+            mime,
+            duration: file?.duration,
+            size: file?.size,
+            lastPartNumber: 0,
+            maxPartNumber: maxPartNumber,
+            parts: [],
+        };
     }
 
     async createMultiPartWithAcl(
@@ -414,174 +455,246 @@ export class AwsS3Service implements IAwsS3Service {
         maxPartNumber: number,
         options?: IAwsS3PutItemWithAclOptions
     ): Promise<AwsS3MultipartDto> {
-        const path: string = `/${options?.path?.replace(/^\/*|\/*$/g, '') ?? ''}`;
-        const acl: ObjectCannedACL = options?.acl
-            ? (options.acl as ObjectCannedACL)
-            : ObjectCannedACL.public_read;
+        if (file.key.startsWith('/')) {
+            throw new Error('Key should not start with "/"');
+        } else if (maxPartNumber > AWS_S3_MAX_PART_NUMBER) {
+            throw new Error(
+                `Max part number is greater than ${AWS_S3_MAX_PART_NUMBER}`
+            );
+        }
 
-        const mime: string = file.originalname.substring(
-            file.originalname.lastIndexOf('.') + 1,
-            file.originalname.length
-        );
-        const filename = options?.customFilename
-            ? `${options?.customFilename.replace(/^\/*|\/*$/g, '')}.${mime}`
-            : file.originalname.replace(/^\/*|\/*$/g, '');
+        const config = this.getConfig(options);
+        const { pathWithFilename, mime } = this.getFileInfo(file.key);
 
-        const key: string =
-            path === '/' ? `${path}${filename}` : `${path}/${filename}`;
         const multiPartCommand: CreateMultipartUploadCommand =
             new CreateMultipartUploadCommand({
-                Bucket: this.bucket,
-                Key: key,
-                ACL: acl,
+                Bucket: config.bucket,
+                Key: file.key,
+                ACL: options?.acl ?? ObjectCannedACL.public_read,
             });
 
-        try {
-            const response = await this.s3Client.send<
-                CreateMultipartUploadCommandInput,
-                CreateMultipartUploadCommandOutput
-            >(multiPartCommand);
+        const response = await config.client.send<
+            CreateMultipartUploadCommandInput,
+            CreateMultipartUploadCommandOutput
+        >(multiPartCommand);
 
-            return {
-                bucket: this.bucket,
-                uploadId: response.UploadId,
-                path,
-                pathWithFilename: key,
-                filename: filename,
-                completedUrl: `${this.baseUrl}${key}`,
-                baseUrl: this.baseUrl,
-                mime,
-                size: 0,
-                lastPartNumber: 0,
-                maxPartNumber: maxPartNumber,
-                parts: [],
-            };
-        } catch (err: any) {
-            throw err;
-        }
+        return {
+            bucket: config.bucket,
+            uploadId: response.UploadId,
+            key: file.key,
+            completedUrl: `${config.baseUrl}${pathWithFilename}`,
+            cdnUrl: config.cdnUrl
+                ? `${config.cdnUrl}${pathWithFilename}`
+                : undefined,
+            mime,
+            size: file?.size,
+            lastPartNumber: 0,
+            maxPartNumber: maxPartNumber,
+            duration: file?.duration,
+            parts: [],
+        };
     }
 
-    async uploadPart(
+    async putItemMultiPart(
         multipart: AwsS3MultipartDto,
         partNumber: number,
-        content: string | Uint8Array | Buffer
-    ): Promise<AwsS3MultipartPartDto> {
+        file: Buffer,
+        options?: IAwsS3Options
+    ): Promise<AwsS3MultipartDto> {
+        const config = this.getConfig(options);
+
         const uploadPartCommand: UploadPartCommand = new UploadPartCommand({
-            Bucket: this.bucket,
-            Key: multipart.path,
-            Body: content,
+            Bucket: config.bucket,
+            Key: multipart.key,
+            Body: file,
             PartNumber: partNumber,
             UploadId: multipart.uploadId,
         });
 
-        try {
-            const { ETag } = await this.s3Client.send<
-                UploadPartCommandInput,
-                UploadPartCommandOutput
-            >(uploadPartCommand);
+        const { ETag } = await config.client.send<
+            UploadPartCommandInput,
+            UploadPartCommandOutput
+        >(uploadPartCommand);
 
-            return {
-                eTag: ETag,
-                partNumber: partNumber,
-                size: content.length,
-            };
-        } catch (err: any) {
-            throw err;
-        }
+        const part: AwsS3MultipartPartDto = {
+            eTag: ETag,
+            partNumber: partNumber,
+            size: file.length,
+        };
+
+        multipart.parts.push(part);
+        multipart.lastPartNumber = part.partNumber;
+
+        return multipart;
     }
 
-    async updateMultiPart(
-        { size, parts, ...others }: AwsS3MultipartDto,
-        part: AwsS3MultipartPartDto
-    ): Promise<AwsS3MultipartDto> {
-        parts.push(part);
+    async completeMultipart(
+        key: string,
+        uploadId: string,
+        options?: IAwsS3Options
+    ): Promise<void> {
+        const config = this.getConfig(options);
+
+        const completeMultipartCommand: CompleteMultipartUploadCommand =
+            new CompleteMultipartUploadCommand({
+                Bucket: config.bucket,
+                Key: key,
+                UploadId: uploadId,
+            });
+
+        await config.client.send<
+            CompleteMultipartUploadCommandInput,
+            CompleteMultipartUploadCommandOutput
+        >(completeMultipartCommand);
+
+        return;
+    }
+
+    async abortMultipart(
+        key: string,
+        uploadId: string,
+        options?: IAwsS3Options
+    ): Promise<void> {
+        const config = this.getConfig(options);
+
+        const abortMultipartCommand: AbortMultipartUploadCommand =
+            new AbortMultipartUploadCommand({
+                Bucket: config.bucket,
+                Key: key,
+                UploadId: uploadId,
+            });
+
+        await config.client.send<
+            AbortMultipartUploadCommandInput,
+            AbortMultipartUploadCommandOutput
+        >(abortMultipartCommand);
+
+        return;
+    }
+
+    async presignPutItem(
+        key: string,
+        options?: IAwsS3PresignOptions
+    ): Promise<AwsS3PresignResponseDto> {
+        if (key.startsWith('/')) {
+            throw new Error('Key should not start with "/"');
+        }
+
+        const config = this.getConfig(options);
+
+        const headCommand = new HeadObjectCommand({
+            Bucket: config.bucket,
+            Key: key,
+        });
+
+        try {
+            await config.client.send<
+                HeadObjectCommandInput,
+                HeadObjectCommandOutput
+            >(headCommand);
+
+            throw new Error(`Key ${key} is already exist`);
+        } catch (error: unknown) {
+            if (!(error instanceof NoSuchKey)) {
+                throw error;
+            }
+        }
+
+        const filename: string = key.substring(
+            key.lastIndexOf('/') + 1,
+            key.length
+        );
+        const mime: string = filename.substring(
+            filename.lastIndexOf('.') + 1,
+            filename.length
+        );
+
+        const size = options?.allowedSize ?? FILE_SIZE_IN_BYTES;
+        const command = new PutObjectCommand({
+            Bucket: config.bucket,
+            Key: key,
+            ContentType: mime,
+            ContentLength: size,
+        });
+        const expiresIn = options?.expired ?? this.presignExpired;
+        const presignUrl = await getSignedUrl(config.client, command, {
+            expiresIn,
+        });
+
+        return { expiredIn: this.presignExpired, presignUrl: presignUrl, key };
+    }
+
+    async presignPutItemMultipart(
+        key: string,
+        uploadId: string,
+        partNumber: number,
+        options?: IAwsS3PresignOptions
+    ): Promise<AwsS3PresignMultiPartResponseDto> {
+        if (key.startsWith('/')) {
+            throw new Error('Key should not start with "/"');
+        }
+
+        const config = this.getConfig(options);
+
+        const uploadPartCommand: UploadPartCommand = new UploadPartCommand({
+            Bucket: config.bucket,
+            Key: key,
+            PartNumber: partNumber,
+            UploadId: uploadId,
+        });
+
+        const expiresIn = options?.expired ?? this.presignExpired;
+        const presignUrl = await getSignedUrl(
+            config.client,
+            uploadPartCommand,
+            {
+                expiresIn,
+            }
+        );
+
         return {
-            ...others,
-            size: size + part.size,
-            lastPartNumber: part.partNumber,
-            parts,
+            expiredIn: this.presignExpired,
+            presignUrl: presignUrl,
+            key,
+            partNumber,
+            uploadId,
         };
     }
 
-    async completeMultipart(multipart: AwsS3MultipartDto): Promise<void> {
-        const completeMultipartCommand: CompleteMultipartUploadCommand =
-            new CompleteMultipartUploadCommand({
-                Bucket: this.bucket,
-                Key: multipart.path,
-                UploadId: multipart.uploadId,
-                MultipartUpload: {
-                    Parts: multipart.parts as CompletedPart[],
-                },
-            });
-
-        try {
-            await this.s3Client.send<
-                CompleteMultipartUploadCommandInput,
-                CompleteMultipartUploadCommandOutput
-            >(completeMultipartCommand);
-
-            return;
-        } catch (err: any) {
-            throw err;
+    mapPresign(
+        { key, size, duration }: AwsS3PresignRequestDto,
+        options?: IAwsS3Options
+    ): AwsS3Dto {
+        if (key.startsWith('/')) {
+            throw new Error('Key should not start with "/"');
         }
+
+        const config = this.getConfig(options);
+
+        const pathWithFilename: string = `/${key}`;
+        const filename: string = key.substring(
+            key.lastIndexOf('/') + 1,
+            key.length
+        );
+        const mime: string = filename.substring(
+            filename.lastIndexOf('.') + 1,
+            filename.length
+        );
+
+        return {
+            bucket: config.bucket,
+            key,
+            completedUrl: `${config.baseUrl}${pathWithFilename}`,
+            cdnUrl: config.cdnUrl
+                ? `${config.cdnUrl}${pathWithFilename}`
+                : undefined,
+            mime,
+            size,
+            duration,
+        };
     }
 
-    async abortMultipart(multipart: AwsS3MultipartDto): Promise<void> {
-        const abortMultipartCommand: AbortMultipartUploadCommand =
-            new AbortMultipartUploadCommand({
-                Bucket: this.bucket,
-                Key: multipart.path,
-                UploadId: multipart.uploadId,
-            });
-
-        try {
-            await this.s3Client.send<
-                AbortMultipartUploadCommandInput,
-                AbortMultipartUploadCommandOutput
-            >(abortMultipartCommand);
-
-            return;
-        } catch (err: any) {
-            throw err;
-        }
-    }
-
-    async setPresignUrl(
-        { filename, size, duration }: IAwsS3PutPresignUrlFile,
-        options?: IAwsS3PutPresignUrlOptions
-    ): Promise<AwsS3PresignUrlDto> {
-        try {
-            const path: string = `/${options?.path?.replace(/^\/*|\/*$/g, '') ?? ''}`;
-            const key: string =
-                path === '/' ? `${path}${filename}` : `${path}/${filename}`;
-            const mime: string = filename.substring(
-                filename.lastIndexOf('.') + 1,
-                filename.length
-            );
-
-            const command = new PutObjectCommand({
-                Bucket: this.bucket,
-                Key: key,
-                ContentType: mime,
-            });
-            const presignUrl = await getSignedUrl(this.s3Client, command, {
-                expiresIn: this.presignUrlExpired,
-            });
-
-            return {
-                bucket: this.bucket,
-                pathWithFilename: key,
-                path,
-                completedUrl: presignUrl,
-                expiredIn: this.presignUrlExpired,
-                size,
-                mime,
-                filename,
-                baseUrl: this.baseUrl,
-                duration,
-            };
-        } catch (err) {
-            throw err;
-        }
+    mapResponse(dto: AwsS3Dto): AwsS3ResponseDto {
+        return plainToInstance(AwsS3ResponseDto, dto);
     }
 }

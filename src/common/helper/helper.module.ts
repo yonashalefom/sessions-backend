@@ -7,6 +7,7 @@ import { HelperEncryptionService } from 'src/common/helper/services/helper.encry
 import { HelperHashService } from 'src/common/helper/services/helper.hash.service';
 import { HelperNumberService } from 'src/common/helper/services/helper.number.service';
 import { HelperStringService } from 'src/common/helper/services/helper.string.service';
+import { HelperMomentDateService } from 'src/common/helper/services/helper.moment.date.service';
 import { HelperURLService } from 'src/common/helper/services/helper.url.service';
 
 @Global()
@@ -18,6 +19,7 @@ export class HelperModule {
             providers: [
                 HelperArrayService,
                 HelperDateService,
+                HelperMomentDateService,
                 HelperEncryptionService,
                 HelperHashService,
                 HelperNumberService,
@@ -27,6 +29,7 @@ export class HelperModule {
             exports: [
                 HelperArrayService,
                 HelperDateService,
+                HelperMomentDateService,
                 HelperEncryptionService,
                 HelperHashService,
                 HelperNumberService,

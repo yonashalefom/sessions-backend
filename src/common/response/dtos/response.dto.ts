@@ -15,7 +15,6 @@ export class ResponseDto {
         name: 'statusCode',
         type: 'number',
         required: true,
-        nullable: false,
         description: 'return specific status code for every endpoints',
         example: 200,
     })
@@ -24,7 +23,6 @@ export class ResponseDto {
     @ApiProperty({
         name: 'message',
         required: true,
-        nullable: false,
         description: 'Message base on language',
         type: 'string',
         example: 'message endpoint',
@@ -34,13 +32,12 @@ export class ResponseDto {
     @ApiProperty({
         name: '_metadata',
         required: true,
-        nullable: false,
         description: 'Contain metadata about API',
         type: ResponseMetadataDto,
         example: {
             language: 'en',
             timestamp: 1660190937231,
-            timezone: 'Africa/Addis_Ababa',
+            timezone: 'Asia/Dubai',
             path: '/api/v1/test/hello',
             version: '1',
             repoVersion: '1.0.0',

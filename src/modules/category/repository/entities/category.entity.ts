@@ -1,15 +1,15 @@
-import { DatabaseEntityAbstract } from 'src/common/database/abstracts/database.entity.abstract';
 import {
     DatabaseEntity,
     DatabaseProp,
     DatabaseSchema,
 } from 'src/common/database/decorators/database.decorator';
 import { IDatabaseDocument } from 'src/common/database/interfaces/database.interface';
+import { DatabaseEntityBase } from 'src/common/database/bases/database.entity';
 
 export const CountryTableName = 'Categories';
 
 @DatabaseEntity({ collection: CountryTableName })
-export class CategoryEntity extends DatabaseEntityAbstract {
+export class CategoryEntity extends DatabaseEntityBase {
     @DatabaseProp({
         required: true,
         unique: true,

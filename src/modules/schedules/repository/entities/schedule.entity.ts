@@ -1,4 +1,3 @@
-import { DatabaseEntityAbstract } from 'src/common/database/abstracts/database.entity.abstract';
 import {
     DatabaseEntity,
     DatabaseProp,
@@ -10,11 +9,12 @@ import {
     ScheduleAvailabilitySchema,
 } from 'src/modules/schedules/repository/entities/schedule.availability.entity';
 import { UserEntity } from 'src/modules/user/repository/entities/user.entity';
+import { DatabaseEntityBase } from 'src/common/database/bases/database.entity';
 
 export const ScheduleTableName = 'Schedules';
 
 @DatabaseEntity({ collection: ScheduleTableName })
-export class ScheduleEntity extends DatabaseEntityAbstract {
+export class ScheduleEntity extends DatabaseEntityBase {
     @DatabaseProp({
         required: true,
         ref: UserEntity.name,
