@@ -17,9 +17,5 @@ export class AuthSignUpRequestDto extends OmitType(UserCreateRequestDto, [
         maxLength: 50,
         minLength: 8,
     })
-    @IsNotEmpty()
-    @IsPassword()
-    @MinLength(8)
-    @MaxLength(50)
     password: string;
 }

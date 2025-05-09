@@ -58,7 +58,7 @@ export class SlotUserController {
         start: Date,
         @Query('endDate', RequestRequiredPipe, DateParsePipe)
         end: Date,
-        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserActiveParsePipe)
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('user', UserActiveParsePipe)
         user: IUserDoc
     ): Promise<IResponse<Record<string, SlotDto[]>>> {
         const userTimezone = user.country.timeZone;

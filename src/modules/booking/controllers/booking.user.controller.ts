@@ -73,7 +73,7 @@ export class BookingUserController {
     async createBooking(
         @Param('event', RequestRequiredPipe, EventParsePipe)
         eventDoc: IEventDoc,
-        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserActiveParsePipe)
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('user', UserActiveParsePipe)
         user: IUserDoc,
         @Body()
         body: BookingCreateRequestDto
@@ -87,7 +87,7 @@ export class BookingUserController {
             });
         }
 
-        // region Check if the Provided Date is Valid and Greater Than Today
+        // region Check if the Provided Date is Valid and Greater or Equal to Today
         const { startDate, endDate } =
             this.bookingService.validateAndGenerateDateRange(
                 startTime,

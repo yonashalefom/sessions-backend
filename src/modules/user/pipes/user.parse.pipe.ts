@@ -29,6 +29,7 @@ export class UserActiveParsePipe implements PipeTransform {
     async transform(value: string): Promise<IUserDoc> {
         const user =
             await this.userService.findOneWithRoleAndCountryById(value);
+        console.log('UUUUUUUUUUUUUUUUUUUU: ' + JSON.stringify(user, null, 2));
         if (!user) {
             throw new NotFoundException({
                 statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,

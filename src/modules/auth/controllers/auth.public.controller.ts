@@ -95,7 +95,6 @@ export class AuthPublicController {
                 message: 'user.error.notFound',
             });
         }
-
         const passwordAttempt: boolean =
             await this.authService.getPasswordAttempt();
         const passwordMaxAttempt: number =

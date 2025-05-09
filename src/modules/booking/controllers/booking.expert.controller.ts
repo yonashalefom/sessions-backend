@@ -42,7 +42,7 @@ export class BookingExpertController {
     @ApiKeyProtected()
     @Put('/cancel/:bookingId')
     async updateProfile(
-        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserParsePipe)
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('user', UserParsePipe)
         user: UserDoc,
         @Param('bookingId', RequestRequiredPipe, BookingParsePipe)
         booking: BookingDoc,

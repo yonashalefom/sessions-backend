@@ -21,6 +21,7 @@ export class DatabaseDto {
         description: 'created by',
         required: false,
     })
+    @Exclude()
     createdBy?: string;
 
     @ApiProperty({
@@ -34,6 +35,7 @@ export class DatabaseDto {
         description: 'updated by',
         required: false,
     })
+    @Exclude()
     updatedBy?: string;
 
     @ApiProperty({
@@ -41,18 +43,21 @@ export class DatabaseDto {
         default: false,
         required: true,
     })
+    @Exclude()
     deleted: boolean;
 
     @ApiProperty({
         description: 'Date delete at',
         required: false,
     })
+    @Exclude()
     deletedAt?: Date;
 
     @ApiProperty({
         description: 'Delete by',
         required: false,
     })
+    @Exclude()
     deletedBy?: string;
 
     @ApiHideProperty()

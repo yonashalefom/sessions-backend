@@ -59,7 +59,7 @@ export class ScheduleExpertController {
     @ApiKeyProtected()
     @Post('/create')
     async createNewSchedule(
-        @AuthJwtPayload('_id', UserParsePipe) user: UserDoc,
+        @AuthJwtPayload('user', UserParsePipe) user: UserDoc,
         @Body()
         body: ScheduleCreateRequestDto
     ): Promise<IResponse<DatabaseIdResponseDto>> {

@@ -17,17 +17,12 @@ export class UserCreateRequestDto {
         required: true,
         maxLength: 100,
     })
-    @IsCustomEmail()
-    @IsNotEmpty()
-    @MaxLength(100)
     email: string;
 
     @ApiProperty({
         example: faker.string.uuid(),
         required: true,
     })
-    @IsNotEmpty()
-    @IsUUID()
     role: string;
 
     @ApiProperty({
@@ -36,19 +31,12 @@ export class UserCreateRequestDto {
         maxLength: 100,
         minLength: 1,
     })
-    @IsString()
-    @IsNotEmpty()
-    @MinLength(1)
-    @MaxLength(100)
     name: string;
 
     @ApiProperty({
         example: faker.string.uuid(),
         required: true,
     })
-    @IsString()
-    @IsUUID()
-    @IsNotEmpty()
     country: string;
 
     @ApiProperty({
@@ -56,8 +44,5 @@ export class UserCreateRequestDto {
         enum: ENUM_USER_GENDER,
         example: ENUM_USER_GENDER.MALE,
     })
-    @IsString()
-    @IsEnum(ENUM_USER_GENDER)
-    @IsNotEmpty()
     gender: ENUM_USER_GENDER;
 }

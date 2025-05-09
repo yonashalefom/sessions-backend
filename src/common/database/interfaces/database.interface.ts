@@ -5,6 +5,11 @@ export interface IDatabaseQueryContainOptions {
     fullWord: boolean;
 }
 
+export interface IDatabaseQueryContainEmailOnlyOptions
+    extends IDatabaseQueryContainOptions {
+    exact: boolean;
+}
+
 export type IDatabaseDocument<T> = T & Document;
 
 // Find

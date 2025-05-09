@@ -79,7 +79,7 @@ export class BookingSharedController {
     @ApiKeyProtected()
     @Get('/get/all')
     async list(
-        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserActiveParsePipe)
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('user', UserActiveParsePipe)
         user: IUserDoc,
         @PaginationQuery({
             availableSearch: BOOKING_DEFAULT_AVAILABLE_SEARCH,
@@ -146,7 +146,7 @@ export class BookingSharedController {
     async get(
         @Param('bookingId', RequestRequiredPipe, BookingParsePipe)
         booking: BookingDoc,
-        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserActiveParsePipe)
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('user', UserActiveParsePipe)
         user: IUserDoc
     ): Promise<IResponse<BookingShortResponseDto>> {
         const isBookingOwner =

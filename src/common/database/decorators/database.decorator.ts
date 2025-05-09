@@ -10,7 +10,10 @@ import {
 } from '@nestjs/mongoose';
 import { Schema as MongooseSchema } from 'mongoose';
 import { DATABASE_CONNECTION_NAME } from 'src/common/database/constants/database.constant';
-import { IDatabaseQueryContainOptions } from 'src/common/database/interfaces/database.interface';
+import {
+    IDatabaseQueryContainEmailOnlyOptions,
+    IDatabaseQueryContainOptions,
+} from 'src/common/database/interfaces/database.interface';
 
 export function InjectDatabaseConnection(
     connectionName?: string
@@ -65,6 +68,37 @@ export function DatabaseHelperQueryContain(
             $options: 'i',
         },
     };
+}
+
+export function DatabaseHelperQueryContainEmailOnly(
+    field: string,
+    value: string,
+    options?: IDatabaseQueryContainEmailOnlyOptions
+) {
+    const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    if (options?.exact) {
+        return {
+            [field]: {
+                $regex: new RegExp(`^${escapedValue}$`),
+                $options: 'i',
+            },
+        };
+    } else if (options?.fullWord) {
+        return {
+            [field]: {
+                $regex: new RegExp(`\\b${escapedValue}\\b`),
+                $options: 'i',
+            },
+        };
+    } else {
+        return {
+            [field]: {
+                $regex: new RegExp(escapedValue),
+                $options: 'i',
+            },
+        };
+    }
 }
 
 export function DatabaseQueryOr(queries: Record<string, any>[]) {
