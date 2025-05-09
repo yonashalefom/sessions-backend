@@ -52,7 +52,10 @@ import {
 } from 'src/modules/country/repository/entities/country.entity';
 import { RoleTableName } from 'src/modules/role/repository/entities/role.entity';
 import { UserUpdateStatusRequestDto } from 'src/modules/user/dtos/request/user.update-status.request.dto';
-import { DatabaseHelperQueryContain } from 'src/common/database/decorators/database.decorator';
+import {
+    DatabaseHelperQueryContain,
+    DatabaseHelperQueryContainEmailOnly,
+} from 'src/common/database/decorators/database.decorator';
 import { UserUploadPhotoRequestDto } from 'src/modules/user/dtos/request/user.upload-photo.request.dto';
 import { UpdateExpertiseRequestDto } from 'src/modules/user/dtos/request/user.update-expertise.dto';
 import { PaginationService } from 'src/common/pagination/services/pagination.service';

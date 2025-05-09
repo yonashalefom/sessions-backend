@@ -59,7 +59,7 @@ export class EventExpertController {
     @ApiKeyProtected()
     @Post('/create')
     async createEvent(
-        @AuthJwtPayload('_id', UserParsePipe) user: UserDoc,
+        @AuthJwtPayload('user', UserParsePipe) user: UserDoc,
         @Body()
         body: EventCreateRequestDto
     ): Promise<IResponse<DatabaseIdResponseDto>> {

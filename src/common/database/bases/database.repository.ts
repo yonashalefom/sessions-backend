@@ -50,7 +50,7 @@ export class DatabaseRepositoryBase<
     ): Promise<T[]> {
         const repository = this._repository.find<T>({
             ...find,
-            deleted: options?.withDeleted ?? false,
+            deleted: options?.withDeleted ? [true, false] : false,
         });
 
         if (options?.select) {
@@ -88,7 +88,7 @@ export class DatabaseRepositoryBase<
     ): Promise<T> {
         const repository = this._repository.findOne<T>({
             ...find,
-            deleted: options?.withDeleted ?? false,
+            deleted: options?.withDeleted ? [true, false] : false,
         });
 
         if (options?.select) {
@@ -122,7 +122,7 @@ export class DatabaseRepositoryBase<
     ): Promise<T> {
         const repository = this._repository.findOne<T>({
             _id,
-            deleted: options?.withDeleted ?? false,
+            deleted: options?.withDeleted ? [true, false] : false,
         });
 
         if (options?.select) {
@@ -157,7 +157,7 @@ export class DatabaseRepositoryBase<
         const repository = this._repository.findOneAndUpdate<T>(
             {
                 ...find,
-                deleted: options?.withDeleted ?? false,
+                deleted: options?.withDeleted ? [true, false] : false,
             },
             {
                 new: true,
@@ -197,7 +197,7 @@ export class DatabaseRepositoryBase<
         const repository = this._repository.findOneAndUpdate<T>(
             {
                 _id,
-                deleted: options?.withDeleted ?? false,
+                deleted: options?.withDeleted ? [true, false] : false,
             },
             {
                 new: true,
@@ -236,7 +236,7 @@ export class DatabaseRepositoryBase<
     ): Promise<number> {
         const repository = this._repository.countDocuments({
             ...find,
-            deleted: options?.withDeleted ?? false,
+            deleted: options?.withDeleted ? [true, false] : false,
         });
 
         if (options?.join) {
@@ -262,7 +262,7 @@ export class DatabaseRepositoryBase<
     ): Promise<boolean> {
         const repository = this._repository.exists({
             ...find,
-            deleted: options?.withDeleted ?? false,
+            deleted: options?.withDeleted ? [true, false] : false,
         });
 
         if (options?.join) {
@@ -305,7 +305,7 @@ export class DatabaseRepositoryBase<
         return this._repository.findOneAndUpdate(
             {
                 ...find,
-                deleted: options?.withDeleted ?? false,
+                deleted: options?.withDeleted ? [true, false] : false,
             },
             data,
             {
@@ -322,7 +322,7 @@ export class DatabaseRepositoryBase<
         return this._repository.findOneAndDelete(
             {
                 ...find,
-                deleted: options?.withDeleted ?? false,
+                deleted: options?.withDeleted ? [true, false] : false,
             },
             {
                 ...options,
@@ -388,7 +388,7 @@ export class DatabaseRepositoryBase<
         return this._repository.updateMany(
             {
                 ...find,
-                deleted: options?.withDeleted ?? false,
+                deleted: options?.withDeleted ? [true, false] : false,
             },
             {
                 $set: data,
@@ -405,7 +405,7 @@ export class DatabaseRepositoryBase<
         return this._repository.updateMany(
             {
                 ...find,
-                deleted: options?.withDeleted ?? false,
+                deleted: options?.withDeleted ? [true, false] : false,
             },
             data,
             { ...options, rawResult: true }
@@ -419,7 +419,7 @@ export class DatabaseRepositoryBase<
         return this._repository.deleteMany(
             {
                 ...find,
-                deleted: options?.withDeleted ?? false,
+                deleted: options?.withDeleted ? [true, false] : false,
             },
             { ...options, rawResult: true }
         );
@@ -481,7 +481,7 @@ export class DatabaseRepositoryBase<
         const newPipelines: PipelineStage[] = [
             {
                 $match: {
-                    deleted: options?.withDeleted ?? false,
+                    deleted: options?.withDeleted ? [true, false] : false,
                 },
             },
             ...pipelines,
@@ -511,7 +511,7 @@ export class DatabaseRepositoryBase<
         const newPipelines: PipelineStage[] = [
             {
                 $match: {
-                    deleted: options?.withDeleted ?? false,
+                    deleted: options?.withDeleted ? [true, false] : false,
                 },
             },
             ...pipelines,
@@ -564,7 +564,7 @@ export class DatabaseRepositoryBase<
         const newPipelines: PipelineStage[] = [
             {
                 $match: {
-                    deleted: options?.withDeleted ?? false,
+                    deleted: options?.withDeleted ? [true, false] : false,
                 },
             },
             ...pipelines,

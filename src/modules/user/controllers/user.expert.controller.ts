@@ -58,7 +58,7 @@ export class UserExpertController {
     @ApiKeyProtected()
     @Put('expertise/update')
     async updateExpertise(
-        @AuthJwtPayload<AuthJwtAccessPayloadDto>('_id', UserParsePipe)
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('user', UserParsePipe)
         user: UserDoc,
         @Body()
         { expertise }: UpdateExpertiseRequestDto
