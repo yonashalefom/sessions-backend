@@ -94,6 +94,19 @@ export const expertExpertiseUpdateValidationSchema = Joi.object({
                 'At least one valid expertise is required.',
         }),
 });
+
+export const userInterestsUpdateValidationSchema = Joi.object({
+    interests: Joi.array()
+        .items(Joi.string().uuid().required())
+        .unique()
+        .max(15)
+        .required()
+        .messages({
+            'array.base': 'Interests must be an array.',
+            'array.includesRequiredUnknowns':
+                'At least one valid interest is required.',
+        }),
+});
 // endregion
 
 // region Create User Schema (For Admin)

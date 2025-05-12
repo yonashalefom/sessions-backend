@@ -24,7 +24,10 @@ import {
 } from 'src/modules/user/docs/user.user.doc';
 import { UserUpdateMobileNumberRequestDto } from 'src/modules/user/dtos/request/user.update-mobile-number.request.dto';
 import { UserUpdateClaimUsernameRequestDto } from 'src/modules/user/dtos/request/user.update-claim-username.dto';
-import { ENUM_USER_STATUS_CODE_ERROR } from 'src/modules/user/enums/user.status-code.enum';
+import {
+    ENUM_EXPERTISE_STATUS_CODE_ERROR,
+    ENUM_USER_STATUS_CODE_ERROR,
+} from 'src/modules/user/enums/user.status-code.enum';
 import { UserParsePipe } from 'src/modules/user/pipes/user.parse.pipe';
 import { UserDoc } from 'src/modules/user/repository/entities/user.entity';
 import { InjectDatabaseConnection } from 'src/common/database/decorators/database.decorator';
@@ -37,6 +40,16 @@ import { ENUM_POLICY_ROLE_TYPE } from 'src/modules/policy/enums/policy.enum';
 import { CountryService } from 'src/modules/country/services/country.service';
 import { ENUM_COUNTRY_STATUS_CODE_ERROR } from 'src/modules/country/enums/country.status-code.enum';
 import { UserProtected } from 'src/modules/user/decorators/user.decorator';
+import {
+    ExpertExpertiseUpdateValidation,
+    UserInterestsUpdateValidation,
+} from 'src/modules/user/decorators/user.common.decorator';
+import { AuthJwtAccessPayloadDto } from 'src/modules/auth/dtos/jwt/auth.jwt.access-payload.dto';
+import {
+    UpdateExpertiseRequestDto,
+    UpdateUserInterestsRequestDto,
+} from 'src/modules/user/dtos/request/user.update-expertise.dto';
+import { CategoryService } from 'src/modules/category/services/category.service';
 
 @ApiTags('modules.user.user')
 @Controller({
@@ -51,9 +64,10 @@ export class UserUserController {
         private readonly activityService: ActivityService,
         private readonly messageService: MessageService,
         private readonly sessionService: SessionService,
-        private readonly countryService: CountryService
+        private readonly countryService: CountryService,
+        private readonly categoryService: CategoryService
     ) {}
-
+    // region Delete User
     @UserUserDeleteDoc()
     @Response('user.delete')
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
@@ -103,7 +117,9 @@ export class UserUserController {
 
         return;
     }
+    // endregion
 
+    // region Update Mobile Number
     @UserUserUpdateMobileNumberDoc()
     @Response('user.updateMobileNumber')
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
@@ -172,7 +188,9 @@ export class UserUserController {
 
         return;
     }
+    // endregion
 
+    // region Update Username
     @UserUserUpdateUsernameDoc()
     @Response('user.updateClaimUsername')
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
@@ -247,4 +265,37 @@ export class UserUserController {
 
         return;
     }
+    // endregion
+
+    // region Update User's Interests
+    @Response('user.updateInterestSuccess')
+    @UserInterestsUpdateValidation()
+    @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @ApiKeyProtected()
+    @Put('/interests/update')
+    async updateInterests(
+        @AuthJwtPayload<AuthJwtAccessPayloadDto>('user', UserParsePipe)
+        user: UserDoc,
+        @Body()
+        { interests }: UpdateUserInterestsRequestDto
+    ): Promise<void> {
+        const validInterests =
+            await this.categoryService.filterValidExpertise(interests);
+
+        if (validInterests.length === 0) {
+            throw new NotFoundException({
+                statusCode: ENUM_EXPERTISE_STATUS_CODE_ERROR.NOT_FOUND,
+                message: 'user.error.interestNotFound',
+            });
+        }
+
+        await this.userService.updateUserInterest(user, {
+            interests: validInterests,
+        });
+
+        return;
+    }
+    // endregion
 }

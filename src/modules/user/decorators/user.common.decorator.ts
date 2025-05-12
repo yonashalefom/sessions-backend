@@ -4,11 +4,18 @@ import { ValidationGuard } from 'src/common/validation/guards/validation.validat
 import {
     createUserValidationSchema,
     expertExpertiseUpdateValidationSchema,
+    userInterestsUpdateValidationSchema,
 } from 'src/modules/user/validation/schemas/user.validation.schemas';
 
 export function ExpertExpertiseUpdateValidation(): MethodDecorator {
     return applyDecorators(
         UseGuards(new ValidationGuard(expertExpertiseUpdateValidationSchema))
+    );
+}
+
+export function UserInterestsUpdateValidation(): MethodDecorator {
+    return applyDecorators(
+        UseGuards(new ValidationGuard(userInterestsUpdateValidationSchema))
     );
 }
 

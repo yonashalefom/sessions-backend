@@ -12,6 +12,7 @@
     "updateClaimUsername": "Username claimed successfully.",
     "error": {
         "mobileNumberExist": "This mobile number already exists.",
+        "interestNotFound": "Interest does not exist.",
         "emailExist": "This email already exists.",
         "blocked": "This user is blocked.",
         "deleted": "This user has been deleted.",

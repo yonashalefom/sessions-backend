@@ -393,25 +393,25 @@ export class AuthPublicController {
                 { session }
             );
 
-            const [verification] = await Promise.all([
-                this.verificationService.createEmailByUser(user, { session }),
-                this.passwordHistoryService.createByUser(
-                    user,
-                    {
-                        type: ENUM_PASSWORD_HISTORY_TYPE.SIGN_UP,
-                    },
-                    { session }
-                ),
-                this.activityService.createByUser(
-                    user,
-                    {
-                        description: this.messageService.setMessage(
-                            'activity.user.signUp'
-                        ),
-                    },
-                    { session }
-                ),
-            ]);
+            // const [verification] = await Promise.all([
+            //     this.verificationService.createEmailByUser(user, { session }),
+            //     this.passwordHistoryService.createByUser(
+            //         user,
+            //         {
+            //             type: ENUM_PASSWORD_HISTORY_TYPE.SIGN_UP,
+            //         },
+            //         { session }
+            //     ),
+            //     this.activityService.createByUser(
+            //         user,
+            //         {
+            //             description: this.messageService.setMessage(
+            //                 'activity.user.signUp'
+            //             ),
+            //         },
+            //         { session }
+            //     ),
+            // ]);
 
             await Promise.all([
                 this.emailQueue.add(
@@ -426,23 +426,23 @@ export class AuthPublicController {
                         },
                     }
                 ),
-                this.emailQueue.add(
-                    ENUM_SEND_EMAIL_PROCESS.VERIFICATION,
-                    {
-                        send: { email, name },
-                        data: {
-                            otp: verification.otp,
-                            expiredAt: verification.expiredDate,
-                            reference: verification.reference,
-                        },
-                    },
-                    {
-                        debounce: {
-                            id: `${ENUM_SEND_EMAIL_PROCESS.VERIFICATION}-${user._id}`,
-                            ttl: 1000,
-                        },
-                    }
-                ),
+                // this.emailQueue.add(
+                //     ENUM_SEND_EMAIL_PROCESS.VERIFICATION,
+                //     {
+                //         send: { email, name },
+                //         data: {
+                //             otp: verification.otp,
+                //             expiredAt: verification.expiredDate,
+                //             reference: verification.reference,
+                //         },
+                //     },
+                //     {
+                //         debounce: {
+                //             id: `${ENUM_SEND_EMAIL_PROCESS.VERIFICATION}-${user._id}`,
+                //             ttl: 1000,
+                //         },
+                //     }
+                // ),
             ]);
 
             await session.commitTransaction();

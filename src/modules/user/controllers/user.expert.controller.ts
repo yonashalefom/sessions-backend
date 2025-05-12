@@ -72,30 +72,6 @@ export class UserExpertController {
                 message: 'expert.error.expertiseNotFound',
             });
         }
-        // const promises: Promise<any>[] = [
-        //     this.roleService.findOneById(role),
-        //     this.userService.existByEmail(email),
-        //     this.countryService.findOneById(country),
-        // ];
-        // const [checkRole, emailExist, checkCountry] =
-        //     await Promise.all(promises);
-        //
-        // if (!checkRole) {
-        //     throw new NotFoundException({
-        //         statusCode: ENUM_ROLE_STATUS_CODE_ERROR.NOT_FOUND,
-        //         message: 'role.error.notFound',
-        //     });
-        // } else if (!checkCountry) {
-        //     throw new NotFoundException({
-        //         statusCode: ENUM_COUNTRY_STATUS_CODE_ERROR.NOT_FOUND,
-        //         message: 'country.error.notFound',
-        //     });
-        // } else if (emailExist) {
-        //     throw new ConflictException({
-        //         statusCode: ENUM_USER_STATUS_CODE_ERROR.EMAIL_EXIST,
-        //         message: 'user.error.emailExist',
-        //     });
-        // }
 
         await this.userService.updateExpertise(user, {
             expertise: validExpertise,

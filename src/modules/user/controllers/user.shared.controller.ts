@@ -63,6 +63,7 @@ export class UserSharedController {
         private readonly messageService: MessageService
     ) {}
 
+    // region Get User Profile
     @UserSharedProfileDoc()
     @Response('user.profile')
     @UserProtected()
@@ -77,7 +78,9 @@ export class UserSharedController {
             this.userService.mapProfile(user);
         return { data: mapped };
     }
+    // endregion
 
+    // region Update Profile
     @UserSharedUpdateProfileDoc()
     @Response('user.updateProfile')
     @UserProtected()
@@ -134,6 +137,7 @@ export class UserSharedController {
 
         return;
     }
+    // endregion
 
     @UserSharedUploadPhotoProfileDoc()
     @Response('user.uploadPhotoProfile')
