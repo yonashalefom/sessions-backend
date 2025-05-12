@@ -9,3 +9,12 @@ export class UpdateExpertiseRequestDto {
     })
     expertise: string[];
 }
+
+export class UpdateUserInterestsRequestDto {
+    @ApiProperty({
+        description: "Update User's Interests",
+        example: [faker.string.uuid()],
+        required: true,
+    })
+    interests: string[];
+}

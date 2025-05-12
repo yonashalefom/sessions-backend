@@ -180,6 +180,12 @@ export class UserEntity extends DatabaseEntityBase {
     expertise: string[];
 
     @DatabaseProp({
+        required: false,
+        type: [{ type: String, ref: CategoryEntity.name }],
+    })
+    userInterests: string[];
+
+    @DatabaseProp({
         required: true,
         type: Boolean,
         default: false,

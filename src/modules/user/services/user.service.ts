@@ -57,7 +57,10 @@ import {
     DatabaseHelperQueryContainEmailOnly,
 } from 'src/common/database/decorators/database.decorator';
 import { UserUploadPhotoRequestDto } from 'src/modules/user/dtos/request/user.upload-photo.request.dto';
-import { UpdateExpertiseRequestDto } from 'src/modules/user/dtos/request/user.update-expertise.dto';
+import {
+    UpdateExpertiseRequestDto,
+    UpdateUserInterestsRequestDto,
+} from 'src/modules/user/dtos/request/user.update-expertise.dto';
 import { PaginationService } from 'src/common/pagination/services/pagination.service';
 import { IPaginationOrder } from 'src/common/pagination/interfaces/pagination.interface';
 import { IResponsePaging } from 'src/common/response/interfaces/response.interface';
@@ -705,6 +708,16 @@ export class UserService implements IUserService {
         options?: IDatabaseSaveOptions
     ): Promise<UserDoc> {
         repository.expertise = expertise;
+
+        return this.userRepository.save(repository, options);
+    }
+
+    async updateUserInterest(
+        repository: UserDoc,
+        { interests }: UpdateUserInterestsRequestDto,
+        options?: IDatabaseSaveOptions
+    ): Promise<UserDoc> {
+        repository.userInterests = interests;
 
         return this.userRepository.save(repository, options);
     }

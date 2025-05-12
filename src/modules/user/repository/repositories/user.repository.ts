@@ -41,6 +41,13 @@ export class UserRepository extends DatabaseRepositoryBase<
             justOne: false,
         },
         {
+            path: 'userInterests',
+            localField: 'userInterests',
+            foreignField: '_id',
+            model: CategoryEntity.name,
+            justOne: false,
+        },
+        {
             path: 'mobileNumber.country',
             localField: 'mobileNumber.country',
             foreignField: '_id',
@@ -71,6 +78,13 @@ export class UserRepository extends DatabaseRepositoryBase<
             {
                 path: 'expertise',
                 localField: 'expertise',
+                foreignField: '_id',
+                model: CategoryEntity.name,
+                justOne: false,
+            },
+            {
+                path: 'userInterests',
+                localField: 'userInterests',
                 foreignField: '_id',
                 model: CategoryEntity.name,
                 justOne: false,
