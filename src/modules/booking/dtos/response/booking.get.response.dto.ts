@@ -29,6 +29,7 @@ export class BookingGetResponseDto extends DatabaseDto {
     ratingFeedback?: string;
     @Type(() => BookingRefResponseDto)
     bookingRef?: BookingRefResponseDto;
+    expired: boolean;
     isActive: boolean;
 }
 

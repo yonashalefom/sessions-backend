@@ -35,6 +35,7 @@ import { EventDoc } from 'src/modules/events/repository/entities/event.entity';
 import { SlotService } from 'src/modules/slot/services/slot.service';
 import { DateRange } from 'src/modules/slot/types/types';
 import { HelperMomentDateService } from 'src/common/helper/services/helper.moment.date.service';
+import moment from 'moment-timezone';
 
 export type WrapperType<T> = T; // WrapperType === Relation
 
@@ -150,69 +151,6 @@ export class BookingService implements IBookingService {
         return this.bookingRepository.create<BookingEntity>(create, options);
     }
 
-    // async createMany(
-    //     data: EventCreateRequestDto[],
-    //     options?: IDatabaseCreateManyOptions
-    // ): Promise<boolean> {
-    //     try {
-    //         const entities: EventEntity[] = data.map(
-    //             ({ title, description }): EventCreateRequestDto => {
-    //                 const create: EventEntity = new EventEntity();
-    //                 create.title = title;
-    //                 create.description = description;
-    //
-    //                 return create;
-    //             }
-    //         ) as EventEntity[];
-    //
-    //         await this.bookingRepository.createMany(entities, options);
-    //
-    //         return true;
-    //     } catch (error: unknown) {
-    //         throw error;
-    //     }
-    // }
-
-    async mapList(
-        categories: BookingDoc[] | BookingEntity[]
-    ): Promise<BookingListResponseDto[]> {
-        return plainToInstance(
-            BookingListResponseDto,
-            categories.map((e: BookingDoc | BookingEntity) =>
-                e instanceof Document ? e.toObject() : e
-            )
-        );
-    }
-
-    async mapGet(
-        event: BookingDoc | BookingEntity
-    ): Promise<BookingGetResponseDto> {
-        return plainToInstance(
-            BookingGetResponseDto,
-            event instanceof Document ? event.toObject() : event
-        );
-    }
-
-    async mapGetShort(
-        booking: BookingDoc | BookingEntity
-    ): Promise<BookingShortResponseDto> {
-        return plainToInstance(
-            BookingShortResponseDto,
-            booking instanceof Document ? booking.toObject() : booking
-        );
-    }
-
-    async mapShort(
-        bookings: BookingDoc[] | BookingEntity[]
-    ): Promise<BookingShortResponseDto[]> {
-        return plainToInstance(
-            BookingShortResponseDto,
-            bookings.map((booking: BookingDoc | BookingEntity) =>
-                booking instanceof Document ? booking.toObject() : booking
-            )
-        );
-    }
-
     validateAndGenerateDateRange(
         startTime: Date,
         eventDuration: number,
@@ -291,4 +229,99 @@ export class BookingService implements IBookingService {
         // Return the validation result
         return isValidSlot;
     }
+
+    // async createMany(
+    //     data: EventCreateRequestDto[],
+    //     options?: IDatabaseCreateManyOptions
+    // ): Promise<boolean> {
+    //     try {
+    //         const entities: EventEntity[] = data.map(
+    //             ({ title, description }): EventCreateRequestDto => {
+    //                 const create: EventEntity = new EventEntity();
+    //                 create.title = title;
+    //                 create.description = description;
+    //
+    //                 return create;
+    //             }
+    //         ) as EventEntity[];
+    //
+    //         await this.bookingRepository.createMany(entities, options);
+    //
+    //         return true;
+    //     } catch (error: unknown) {
+    //         throw error;
+    //     }
+    // }
+
+    // region Maps
+    async mapList(
+        categories: BookingDoc[] | BookingEntity[]
+    ): Promise<BookingListResponseDto[]> {
+        return plainToInstance(
+            BookingListResponseDto,
+            categories.map((e: BookingDoc | BookingEntity) =>
+                e instanceof Document ? e.toObject() : e
+            )
+        );
+    }
+
+    async mapGet(
+        event: BookingDoc | BookingEntity
+    ): Promise<BookingGetResponseDto> {
+        return plainToInstance(
+            BookingGetResponseDto,
+            event instanceof Document ? event.toObject() : event
+        );
+    }
+
+    async mapGetShort(
+        booking: BookingDoc | BookingEntity
+    ): Promise<BookingShortResponseDto> {
+        return plainToInstance(
+            BookingShortResponseDto,
+            booking instanceof Document ? booking.toObject() : booking
+        );
+    }
+
+    async mapShort(
+        bookings: BookingDoc[] | BookingEntity[]
+    ): Promise<BookingShortResponseDto[]> {
+        return plainToInstance(
+            BookingShortResponseDto,
+            bookings.map((booking: BookingDoc | BookingEntity) =>
+                booking instanceof Document ? booking.toObject() : booking
+            )
+        );
+    }
+
+    async mapGetUserBookingsResponse(
+        bookings: BookingDoc[] | BookingEntity[],
+        userTimezone: string
+    ): Promise<BookingShortResponseDto[]> {
+        const now = new Date();
+        return plainToInstance(
+            BookingShortResponseDto,
+            bookings.map((booking: BookingDoc | BookingEntity) => {
+                const bookingObj =
+                    booking instanceof Document ? booking.toObject() : booking;
+                const startTimeLocal = moment
+                    .utc(bookingObj.startTime)
+                    .tz(userTimezone)
+                    .format('YYYY-MM-DDTHH:mm:ssZ');
+                const endTimeLocal = moment
+                    .utc(bookingObj.endTime)
+                    .tz(userTimezone)
+                    .format('YYYY-MM-DDTHH:mm:ssZ');
+                const expired = bookingObj.endTime < now;
+
+                return {
+                    ...bookingObj,
+                    startTime: startTimeLocal,
+                    endTime: endTimeLocal,
+                    expired,
+                };
+            })
+        );
+    }
+    // endregion
 }
