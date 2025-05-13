@@ -11,6 +11,7 @@
     "updateMobileNumber": "Mobile number updated successfully.",
     "updateClaimUsername": "Username claimed successfully.",
     "error": {
+        "passwordNotMatch": "Passwords do not match.",
         "mobileNumberExist": "This mobile number already exists.",
         "interestNotFound": "Interest does not exist.",
         "emailExist": "This email already exists.",

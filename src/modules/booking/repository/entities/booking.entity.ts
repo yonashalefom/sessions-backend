@@ -12,7 +12,12 @@ import { EventEntity } from 'src/modules/events/repository/entities/event.entity
 import { UserEntity } from 'src/modules/user/repository/entities/user.entity';
 import { DatabaseEntityBase } from 'src/common/database/bases/database.entity';
 
-export type BookingStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED';
+export type BookingStatus =
+    | 'PENDING'
+    | 'ACCEPTED'
+    | 'REJECTED'
+    | 'CANCELLED'
+    | 'FINISHED';
 
 export const BookingTableName = 'Bookings';
 
@@ -71,7 +76,7 @@ export class BookingEntity extends DatabaseEntityBase {
         unique: true,
         trim: true,
         type: String,
-        enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED'],
+        enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED', 'FINISHED'],
         default: 'ACCEPTED',
     })
     status: BookingStatus;

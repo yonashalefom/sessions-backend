@@ -120,7 +120,10 @@ export class BookingSharedController {
         );
 
         const mapped: BookingShortResponseDto[] =
-            await this.bookingService.mapShort(bookings);
+            await this.bookingService.mapGetUserBookingsResponse(
+                bookings,
+                user.country.timeZone
+            );
 
         return {
             _pagination: { total, totalPage },
