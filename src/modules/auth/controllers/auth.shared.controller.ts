@@ -112,6 +112,7 @@ export class AuthSharedController {
             await this.authService.getPasswordAttempt();
         const passwordMaxAttempt: number =
             await this.authService.getPasswordMaxAttempt();
+
         if (passwordAttempt && user.passwordAttempt >= passwordMaxAttempt) {
             throw new ForbiddenException({
                 statusCode: ENUM_USER_STATUS_CODE_ERROR.PASSWORD_ATTEMPT_MAX,
@@ -123,37 +124,48 @@ export class AuthSharedController {
             this.authService.validateUser(body.oldPassword, user.password),
             this.userService.resetPasswordAttempt(user),
         ]);
+
         if (!matchPassword) {
             await this.userService.increasePasswordAttempt(user);
 
             throw new BadRequestException({
                 statusCode: ENUM_USER_STATUS_CODE_ERROR.PASSWORD_NOT_MATCH,
-                message: 'auth.error.passwordNotMatch',
+                message: 'auth.error.passwordNotMatchChangePassword',
             });
         }
 
         const [password, checkPassword] = await Promise.all([
             this.authService.createPassword(body.newPassword),
-            this.passwordHistoryService.findOneUsedByUser(
-                user._id,
-                user.password
-            ),
+            this.passwordHistoryService.findAllUsedByUser(user._id),
         ]);
-        if (checkPassword) {
+
+        const isReused = await Promise.all(
+            checkPassword.map(history =>
+                this.authService.validateUser(
+                    body.newPassword,
+                    history.password
+                )
+            )
+        );
+
+        if (isReused.some(result => result)) {
+            console.log('The new password is being reused!');
             const passwordPeriod =
                 await this.passwordHistoryService.getPasswordPeriod();
             throw new BadRequestException({
                 statusCode: ENUM_USER_STATUS_CODE_ERROR.PASSWORD_MUST_NEW,
-                message: 'user.error.passwordMustNew',
+                message: 'auth.error.passwordMustNew',
                 _metadata: {
                     customProperty: {
                         messageProperties: {
-                            period: passwordPeriod,
+                            period: passwordPeriod / 86400,
                             expiredAt: checkPassword.expiredAt,
                         },
                     },
                 },
             });
+        } else {
+            console.log('The new password is unique.');
         }
 
         const session: ClientSession =

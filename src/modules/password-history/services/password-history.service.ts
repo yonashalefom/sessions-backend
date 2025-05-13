@@ -114,6 +114,23 @@ export class PasswordHistoryService implements IPasswordHistoryService {
         );
     }
 
+    async findAllUsedByUser(
+        user: string,
+        options?: IDatabaseFindAllOptions
+    ): Promise<IPasswordHistoryDoc[]> {
+        const today = this.helperDateService.create();
+
+        return this.findAllByUser(
+            user,
+            {
+                expiredAt: {
+                    $gte: today,
+                },
+            },
+            options
+        );
+    }
+
     async getTotal(
         find?: Record<string, any>,
         options?: IDatabaseGetTotalOptions
