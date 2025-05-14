@@ -52,10 +52,7 @@ import {
 } from 'src/modules/country/repository/entities/country.entity';
 import { RoleTableName } from 'src/modules/role/repository/entities/role.entity';
 import { UserUpdateStatusRequestDto } from 'src/modules/user/dtos/request/user.update-status.request.dto';
-import {
-    DatabaseHelperQueryContain,
-    DatabaseHelperQueryContainEmailOnly,
-} from 'src/common/database/decorators/database.decorator';
+import { DatabaseHelperQueryContain } from 'src/common/database/decorators/database.decorator';
 import { UserUploadPhotoRequestDto } from 'src/modules/user/dtos/request/user.upload-photo.request.dto';
 import {
     UpdateExpertiseRequestDto,
@@ -66,6 +63,7 @@ import { IPaginationOrder } from 'src/common/pagination/interfaces/pagination.in
 import { IResponsePaging } from 'src/common/response/interfaces/response.interface';
 import { PaginationListDto } from 'src/common/pagination/dtos/pagination.list.dto';
 import { ExpertsListByCategoryResponseDto } from 'src/modules/user/dtos/response/experts.list.by.category.response.dto';
+import parsePhoneNumberFromString, { CountryCode } from 'libphonenumber-js/max';
 
 @Injectable()
 export class UserService implements IUserService {
@@ -805,6 +803,22 @@ export class UserService implements IUserService {
     }
 
     checkMobileNumber(mobileNumber: string, country: CountryDoc): boolean {
-        return country.phoneCode.some(e => mobileNumber.startsWith(e));
+        const phone = parsePhoneNumberFromString(
+            mobileNumber,
+            country.alpha2Code as CountryCode
+        );
+
+        if (!phone) return false;
+
+        return phone.isValid() && phone.getType() === 'MOBILE';
+    }
+
+    formatMobileNumber(mobileNumber: string, country: CountryDoc): string {
+        const phoneNumber = parsePhoneNumberFromString(
+            mobileNumber,
+            country.alpha2Code as CountryCode
+        );
+
+        return phoneNumber.formatInternational();
     }
 }

@@ -79,6 +79,7 @@ export class AuthPublicController {
         private readonly messageService: MessageService
     ) {}
 
+    // region Login with Credential (Email & Password)
     @AuthPublicLoginCredentialDoc()
     @Response('auth.loginWithCredential')
     @ApiKeyProtected()
@@ -183,7 +184,9 @@ export class AuthPublicController {
             });
         }
     }
+    // endregion
 
+    // region Login with Google
     @AuthPublicLoginSocialGoogleDoc()
     @Response('auth.loginWithSocialGoogle')
     @AuthSocialGoogleProtected()
@@ -262,7 +265,9 @@ export class AuthPublicController {
             });
         }
     }
+    // endregion
 
+    // region Login with Apple
     @AuthPublicLoginSocialAppleDoc()
     @Response('user.loginWithSocialApple')
     @AuthSocialAppleProtected()
@@ -340,7 +345,9 @@ export class AuthPublicController {
             });
         }
     }
+    // endregion
 
+    // region Sign Up with Email
     @AuthPublicSignUpDoc()
     @Response('auth.signUp')
     @ApiKeyProtected()
@@ -460,4 +467,5 @@ export class AuthPublicController {
 
         return;
     }
+    // endregion
 }
