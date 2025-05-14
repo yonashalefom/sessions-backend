@@ -63,10 +63,7 @@ import { IPaginationOrder } from 'src/common/pagination/interfaces/pagination.in
 import { IResponsePaging } from 'src/common/response/interfaces/response.interface';
 import { PaginationListDto } from 'src/common/pagination/dtos/pagination.list.dto';
 import { ExpertsListByCategoryResponseDto } from 'src/modules/user/dtos/response/experts.list.by.category.response.dto';
-import parsePhoneNumberFromString, {
-    CountryCode,
-    isValidPhoneNumber,
-} from 'libphonenumber-js/max';
+import parsePhoneNumberFromString, { CountryCode } from 'libphonenumber-js/max';
 
 @Injectable()
 export class UserService implements IUserService {

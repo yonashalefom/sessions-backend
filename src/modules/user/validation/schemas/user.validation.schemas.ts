@@ -132,3 +132,26 @@ export const updateMobileNumberValidationSchema = Joi.object({
     .required()
     .messages({ 'any.required': 'Please provide a valid phone number.' });
 // endregion
+
+// region Update Username Schema
+export const updateUsernameValidationSchema = Joi.object({
+    username: Joi.string()
+        .trim()
+        .min(2)
+        .max(50)
+        .pattern(/^[a-zA-Z0-9_.]+$/)
+        .messages({
+            'string.empty': 'Username cannot be empty',
+            'string.min': 'Username should have at least {#limit} characters',
+            'string.max': 'Username should not exceed {#limit} characters',
+            'string.pattern.base':
+                'Username can only contain letters, numbers, underscores, and periods',
+        })
+        .required()
+        .messages({
+            'any.required': 'Username is required',
+        }),
+})
+    .required()
+    .messages({ 'any.required': 'Please provide a valid phone number.' });
+// endregion

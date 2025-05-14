@@ -5,6 +5,7 @@ import {
     createUserValidationSchema,
     expertExpertiseUpdateValidationSchema,
     updateMobileNumberValidationSchema,
+    updateUsernameValidationSchema,
     userInterestsUpdateValidationSchema,
 } from 'src/modules/user/validation/schemas/user.validation.schemas';
 
@@ -29,5 +30,11 @@ export function CreateUserValidation(): MethodDecorator {
 export function UpdateMobileNumberValidation(): MethodDecorator {
     return applyDecorators(
         UseGuards(new ValidationGuard(updateMobileNumberValidationSchema))
+    );
+}
+
+export function UpdateUsernameValidation(): MethodDecorator {
+    return applyDecorators(
+        UseGuards(new ValidationGuard(updateUsernameValidationSchema))
     );
 }

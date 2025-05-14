@@ -43,6 +43,7 @@ import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 import {
     ExpertExpertiseUpdateValidation,
     UpdateMobileNumberValidation,
+    UpdateUsernameValidation,
     UserInterestsUpdateValidation,
 } from 'src/modules/user/decorators/user.common.decorator';
 import { AuthJwtAccessPayloadDto } from 'src/modules/auth/dtos/jwt/auth.jwt.access-payload.dto';
@@ -203,6 +204,7 @@ export class UserUserController {
     // region Update Username
     @UserUserUpdateUsernameDoc()
     @Response('user.updateClaimUsername')
+    @UpdateUsernameValidation()
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
     @UserProtected()
     @AuthJwtAccessProtected()
@@ -221,15 +223,17 @@ export class UserUserController {
             });
         }
 
-        const checkBadWord =
-            await this.userService.checkUsernameBadWord(username);
-        if (checkBadWord) {
-            throw new BadRequestException({
-                statusCode:
-                    ENUM_USER_STATUS_CODE_ERROR.USERNAME_CONTAIN_BAD_WORD,
-                message: 'user.error.usernameContainBadWord',
-            });
-        }
+        // region @todo Fix this Bug
+        // const checkBadWord =
+        //     await this.userService.checkUsernameBadWord(username);
+        // if (checkBadWord) {
+        //     throw new BadRequestException({
+        //         statusCode:
+        //             ENUM_USER_STATUS_CODE_ERROR.USERNAME_CONTAIN_BAD_WORD,
+        //         message: 'user.error.usernameContainBadWord',
+        //     });
+        // }
+        // endregion
 
         const exist = await this.userService.existByUsername(username);
         if (exist) {
