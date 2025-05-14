@@ -4,6 +4,7 @@ import { ValidationGuard } from 'src/common/validation/guards/validation.validat
 import {
     createUserValidationSchema,
     expertExpertiseUpdateValidationSchema,
+    updateMobileNumberValidationSchema,
     userInterestsUpdateValidationSchema,
 } from 'src/modules/user/validation/schemas/user.validation.schemas';
 
@@ -22,5 +23,11 @@ export function UserInterestsUpdateValidation(): MethodDecorator {
 export function CreateUserValidation(): MethodDecorator {
     return applyDecorators(
         UseGuards(new ValidationGuard(createUserValidationSchema))
+    );
+}
+
+export function UpdateMobileNumberValidation(): MethodDecorator {
+    return applyDecorators(
+        UseGuards(new ValidationGuard(updateMobileNumberValidationSchema))
     );
 }

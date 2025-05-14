@@ -1,4 +1,7 @@
 import Joi from 'joi';
+import { GlobalValidationHelperClass } from 'src/common/helper/global/global.validation.helper';
+
+const globalValidationHelperClass = new GlobalValidationHelperClass();
 
 // // region Expert Availability Update Validation Schema
 // export const expertAvailabilityUpdateValidationSchema = Joi.object({
@@ -116,4 +119,16 @@ export const createUserValidationSchema = Joi.object({
     name: Joi.string().required().min(1).max(100),
     country: Joi.string().uuid().required(),
 });
+// endregion
+
+// region Update Phone Number Schema
+export const updateMobileNumberValidationSchema = Joi.object({
+    country: Joi.string()
+        .required()
+        .uuid()
+        .message('Please specify a valid country'),
+    number: Joi.string().min(4).max(100).required(),
+})
+    .required()
+    .messages({ 'any.required': 'Please provide a valid phone number.' });
 // endregion

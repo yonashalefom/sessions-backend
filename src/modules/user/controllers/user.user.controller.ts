@@ -42,6 +42,7 @@ import { ENUM_COUNTRY_STATUS_CODE_ERROR } from 'src/modules/country/enums/countr
 import { UserProtected } from 'src/modules/user/decorators/user.decorator';
 import {
     ExpertExpertiseUpdateValidation,
+    UpdateMobileNumberValidation,
     UserInterestsUpdateValidation,
 } from 'src/modules/user/decorators/user.common.decorator';
 import { AuthJwtAccessPayloadDto } from 'src/modules/auth/dtos/jwt/auth.jwt.access-payload.dto';
@@ -122,6 +123,7 @@ export class UserUserController {
     // region Update Mobile Number
     @UserUserUpdateMobileNumberDoc()
     @Response('user.updateMobileNumber')
+    @UpdateMobileNumberValidation()
     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.USER)
     @UserProtected()
     @AuthJwtAccessProtected()
@@ -144,6 +146,7 @@ export class UserUserController {
             number,
             checkCountry
         );
+
         if (!checkValidMobileNumber) {
             throw new BadRequestException({
                 statusCode: ENUM_USER_STATUS_CODE_ERROR.MOBILE_NUMBER_INVALID,
@@ -151,33 +154,40 @@ export class UserUserController {
             });
         }
 
+        const formattedMobileNumber = this.userService.formatMobileNumber(
+            number,
+            checkCountry
+        );
+
         const session: ClientSession =
             await this.databaseConnection.startSession();
         session.startTransaction();
 
         try {
-            await Promise.all([
-                this.userService.updateMobileNumber(
-                    user,
-                    { number, country },
-                    { session }
-                ),
-                this.activityService.createByUser(
-                    user,
-                    {
-                        description: this.messageService.setMessage(
-                            'activity.user.updateMobileNumber'
-                        ),
-                    },
-                    { session }
-                ),
-            ]);
+            await this.userService.updateMobileNumber(
+                user,
+                { number: formattedMobileNumber, country },
+                { session }
+            );
+
+            await this.activityService.createByUser(
+                user,
+                {
+                    description: this.messageService.setMessage(
+                        'activity.user.updateMobileNumber'
+                    ),
+                },
+                { session }
+            );
 
             await session.commitTransaction();
             await session.endSession();
         } catch (err: any) {
             await session.abortTransaction();
             await session.endSession();
+
+            console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&');
+            console.log(JSON.stringify(err, null, 2));
 
             throw new InternalServerErrorException({
                 statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
